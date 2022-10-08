@@ -4,29 +4,20 @@ import lombok.Getter;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.cfg.AvailableSettings;
 
 public class SQLPostgres {
     @Getter SessionFactory sessionFactory;
+    @Getter StandardServiceRegistry standardServiceRegistry;
 
     public SQLPostgres() {
-        StandardServiceRegistryBuilder standardServiceRegistryBuilder = new StandardServiceRegistryBuilder()
-                .configure()
-                .applySetting(AvailableSettings.DIALECT, "org.hibernate.dialect.PostgreSQLDialect")
-                .applySetting(AvailableSettings.DRIVER, "org.postgresql.Driver")
-                .applySetting(AvailableSettings.URL, "jdbc:postgresql://localhost:5432/azubiprojekt?ApplicationName=azubiprojekt")
-                .applySetting(AvailableSettings.USER, "postgres")
-                .applySetting(AvailableSettings.PASS, "postgres")
-                ;
+        standardServiceRegistry = new StandardServiceRegistryBuilder().configure().build();
         try {
-            sessionFactory = new MetadataSources(
-                    standardServiceRegistryBuilder.build()
-            ).buildMetadata().buildSessionFactory();
+            sessionFactory = new MetadataSources(standardServiceRegistry).buildMetadata().buildSessionFactory();
             System.out.println("SQL: SessionFactory wurde Erstellt");
         } catch (Exception e) {
-            System.out.println("SQL: SessionFactory konnte nicht erstellt werden. Error: ");
-            System.out.printf(e.getMessage());
+            System.out.println("SQL: SessionFactory konnte nicht erstellt werden.");
         }
     }
 

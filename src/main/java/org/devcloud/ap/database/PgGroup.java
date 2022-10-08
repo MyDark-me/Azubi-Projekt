@@ -10,8 +10,8 @@ import java.io.Serializable;
 @Entity
 @Table(name = "group")
 public class PgGroup implements Serializable {
-    @Id
     @GenericGenerator(name = "generator", strategy = "increment")
+    @Id
     @GeneratedValue(generator = "generator")
     @Column(name = "group_id")
     @Getter @Setter Integer id;
