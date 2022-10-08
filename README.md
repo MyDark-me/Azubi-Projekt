@@ -16,4 +16,3 @@ Coming Soon
 Coming Soon
 
 #### &lt;copyright&gt; with 💛 by Sebastian Schindler, Paul Rakutt &lt;/copyright&gt;
-    
