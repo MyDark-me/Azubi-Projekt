@@ -14,7 +14,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 public class HTTPServer {
-    private static final File index = new File(Azubiprojekt.class.getClassLoader().getResource("gui/index.html").getPath());
     private static HttpServer server;
 
     /**
@@ -48,7 +47,7 @@ public class HTTPServer {
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
             httpExchange.getResponseHeaders().add("Content-Type", "text/html; charset=utf-8");
-            String response = new String(Files.readAllBytes(Paths.get(index.getPath())), StandardCharsets.UTF_8);
+            String response = new String(Files.readAllBytes(Paths.get(Azubiprojekt.class.getClassLoader().getResource("gui/index.html").getPath())), StandardCharsets.UTF_8);
 
             httpExchange.sendResponseHeaders(200, response.length());
             OutputStream outputStream = httpExchange.getResponseBody();
