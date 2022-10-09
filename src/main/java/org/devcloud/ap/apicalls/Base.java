@@ -15,7 +15,7 @@ import java.time.format.DateTimeFormatter;
 
 public class Base {
     private static final Logger logger = LoggerFactory.getLogger(Base.class);
-    private static final JSONCreator jsonCreator = new JSONCreator() .addKeys("statuscode");
+    private static final JSONCreator jsonCreator = new JSONCreator().addKeys("statuscode");
 
     public static void register(HttpServer httpServer) {
         httpServer.createContext("/api/check", new Check());
