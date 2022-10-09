@@ -1,7 +1,7 @@
 package org.devcloud.ap;
 
 import lombok.Getter;
-import org.devcloud.ap.database.SQLPostgres;
+import org.devcloud.ap.utils.SQLPostgres;
 import org.devcloud.ap.utils.HTTPServer;
 
 import java.io.IOException;

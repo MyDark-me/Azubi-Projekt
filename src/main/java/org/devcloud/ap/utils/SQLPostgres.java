@@ -1,4 +1,4 @@
-package org.devcloud.ap.database;
+package org.devcloud.ap.utils;
 
 import lombok.Getter;
 import org.hibernate.Session;
@@ -6,8 +6,12 @@ import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.AvailableSettings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SQLPostgres {
+
+    Logger logger = LoggerFactory.getLogger(SQLPostgres.class);
     @Getter SessionFactory sessionFactory;
 
     public SQLPostgres(String host, String user, String password, String database) {
@@ -26,9 +30,9 @@ public class SQLPostgres {
             this.sessionFactory = new MetadataSources(
                     standardServiceRegistryBuilder.build()
             ).buildMetadata().buildSessionFactory();
-            System.out.println("SQL: SessionFactory wurde Erstellt");
+            logger.info("SQL: SessionFactory wurde Erstellt");
         } catch (Exception e) {
-            System.out.println("SQL: SessionFactory konnte nicht erstellt werden. Error: ");
+            logger.error("SQL: SessionFactory konnte nicht erstellt werden. Error: ");
             e.printStackTrace();
         }
     }
