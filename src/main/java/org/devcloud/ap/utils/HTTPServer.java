@@ -11,9 +11,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 public class HTTPServer {
     private static HttpServer server;
@@ -52,12 +52,13 @@ public class HTTPServer {
             httpExchange.getResponseHeaders().add("Content-Type", "text/html; charset=utf-8");
             String request = httpExchange.getRequestURI().toString();
 
-            File index = new File(Azubiprojekt.class.getClassLoader().getResource("gui/index.html").getPath());
-            String response = new String(Files.readAllBytes(Paths.get(index.getPath())), StandardCharsets.UTF_8);
+            File index = new File(Objects.requireNonNull(Azubiprojekt.class.getClassLoader().getResource("gui/index.html")).getPath());
+            String response = Files.readString(Paths.get(index.getPath()));
 
             httpExchange.sendResponseHeaders(200, response.length());
             OutputStream outputStream = httpExchange.getResponseBody();
-            outputStream.write(response.getBytes());
+            for(char write : response.toCharArray())
+                outputStream.write(write);
             outputStream.close();
 
             logger.debug("{} - was requested", request);
