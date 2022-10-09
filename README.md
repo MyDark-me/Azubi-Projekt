@@ -2,7 +2,7 @@
       <h1> <img src="https://imgur.com/a/FOvAxfS" width="80px"><br/>AzubiProjekt</h1>
      </div>
 <p align="center"> <a href="https://github.com/DarkModz-Official/Azubi-Projekt" target="_blank"><img alt="" src="https://img.shields.io/badge/Website-EA4C89?style=normal&logo=dribbble&logoColor=white" style="vertical-align:center" /></a> <a href="https://twitter.com/MyDarkMe_DEV" target="_blank"><img alt="" src="https://img.shields.io/badge/Twitter-1DA1F2?style=normal&logo=twitter&logoColor=white" style="vertical-align:center" /></a> <a href="}" target="_blank"></a> </p>
-<div align="center"><img alt="" src="https://github.com/DarkModz-Official/Azubi-Projekt/actions/workflows/maven.yml/badge.svg"<a href="https://github.com/DarkModz-Official/Azubi-Projekt/actions/workflows/maven.yml">aaa</a></img></div>
+<div align="center"><img alt="" src="https://github.com/DarkModz-Official/Azubi-Projekt/actions/workflows/maven.yml/badge.svg"<a href="https://github.com/DarkModz-Official/Azubi-Projekt/actions/workflows/maven.yml"></a></img></div>
 # Description
 A simple to use API for UserManagement
 
