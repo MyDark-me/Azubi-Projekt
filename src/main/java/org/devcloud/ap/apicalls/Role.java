@@ -13,7 +13,6 @@ import java.net.URI;
 
 public class Role {
     private static final Logger logger = LoggerFactory.getLogger(Role.class);
-    private static final JSONCreator jsonCreator = new JSONCreator().addKeys("statuscode");
 
     public static void register(HttpServer httpServer) {
         httpServer.createContext("/api/role/create", new Create());
@@ -22,6 +21,10 @@ public class Role {
     }
 
     private Role() {}
+
+    private static JSONCreator getJSONCreator() {
+        return new JSONCreator().addKeys("statuscode");
+    }
 
     private static void addResponseHeaders(HttpExchange httpExchange) {
         httpExchange.getResponseHeaders().add("Content-Type", "application/json");
@@ -49,7 +52,7 @@ public class Role {
             URI requestURI = httpExchange.getRequestURI();
             debugRequest(requestURI);
 
-            String response = jsonCreator
+            String response = getJSONCreator()
                     .addKeys("response")
                     .addValue(201, "User API is not implemented yet!").toString();
 
@@ -66,7 +69,7 @@ public class Role {
             URI requestURI = httpExchange.getRequestURI();
             debugRequest(requestURI);
 
-            String response = jsonCreator
+            String response = getJSONCreator()
                     .addKeys("response")
                     .addValue(201, "User API is not implemented yet!").toString();
 
@@ -83,7 +86,7 @@ public class Role {
             URI requestURI = httpExchange.getRequestURI();
             debugRequest(requestURI);
 
-            String response = jsonCreator
+            String response = getJSONCreator()
                     .addKeys("response")
                     .addValue(201, "User API is not implemented yet!").toString();
 

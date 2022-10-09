@@ -13,7 +13,6 @@ import java.net.URI;
 
 public class Member {
     private static final Logger logger = LoggerFactory.getLogger(Member.class);
-    private static final JSONCreator jsonCreator = new JSONCreator().addKeys("statuscode");
 
     public static void register(HttpServer httpServer) {
         httpServer.createContext("/api/member/join", new Join());
@@ -23,6 +22,10 @@ public class Member {
     }
 
     private Member() {}
+
+    private static JSONCreator getJSONCreator() {
+        return new JSONCreator().addKeys("statuscode");
+    }
 
     private static void addResponseHeaders(HttpExchange httpExchange) {
         httpExchange.getResponseHeaders().add("Content-Type", "application/json");
@@ -50,7 +53,7 @@ public class Member {
             URI requestURI = httpExchange.getRequestURI();
             debugRequest(requestURI);
 
-            String response = jsonCreator
+            String response = getJSONCreator()
                     .addKeys("response")
                     .addValue(201, "User API is not implemented yet!").toString();
 
@@ -67,7 +70,7 @@ public class Member {
             URI requestURI = httpExchange.getRequestURI();
             debugRequest(requestURI);
 
-            String response = jsonCreator
+            String response = getJSONCreator()
                     .addKeys("response")
                     .addValue(201, "User API is not implemented yet!").toString();
 
@@ -84,7 +87,7 @@ public class Member {
             URI requestURI = httpExchange.getRequestURI();
             debugRequest(requestURI);
 
-            String response = jsonCreator
+            String response = getJSONCreator()
                     .addKeys("response")
                     .addValue(201, "User API is not implemented yet!").toString();
 
@@ -101,7 +104,7 @@ public class Member {
             URI requestURI = httpExchange.getRequestURI();
             debugRequest(requestURI);
 
-            String response = jsonCreator
+            String response = getJSONCreator()
                     .addKeys("response")
                     .addValue(201, "User API is not implemented yet!").toString();
 

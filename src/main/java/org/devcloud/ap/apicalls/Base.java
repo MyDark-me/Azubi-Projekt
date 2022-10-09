@@ -16,7 +16,6 @@ import java.time.format.DateTimeFormatter;
 
 public class Base {
     private static final Logger logger = LoggerFactory.getLogger(Base.class);
-    private static final JSONCreator jsonCreator = new JSONCreator().addKeys("statuscode");
 
     public static void register(HttpServer httpServer) {
         httpServer.createContext("/api/check", new Check());
@@ -25,6 +24,10 @@ public class Base {
     }
 
     private Base() {}
+
+    private static JSONCreator getJSONCreator() {
+        return new JSONCreator().addKeys("statuscode");
+    }
 
     private static void addResponseHeaders(HttpExchange httpExchange) {
         httpExchange.getResponseHeaders().add("Content-Type", "application/json");
@@ -59,7 +62,7 @@ public class Base {
                 connection = "Database is down!";
 
 
-            String response = jsonCreator
+            String response = getJSONCreator()
                     .addKeys("api", "apiConnected", "database", "databaseConnected", "version")
                     .addValue(201, "API is running!", true, connection, bConnection, "1.0-SNAPSHOT").toString();
 
@@ -79,7 +82,7 @@ public class Base {
             DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
             String formattedTime = localTime.format(dateTimeFormatter);
 
-            String response = jsonCreator
+            String response = getJSONCreator()
                     .addKeys("formatted", "raw")
                     .addValue(201, formattedTime, localTime.toString()).toString();
 
@@ -99,7 +102,7 @@ public class Base {
             DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
             String formattedDate = localDateTime.format(dateTimeFormatter);
 
-            String response = jsonCreator
+            String response = getJSONCreator()
                     .addKeys("formatted", "raw")
                     .addValue(201, formattedDate, localDateTime.toString()).toString();
 
