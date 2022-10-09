@@ -9,9 +9,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
 
 public class Member {
-    private static final Logger logger = LoggerFactory.getLogger(Base.class);
+    private static final Logger logger = LoggerFactory.getLogger(Member.class);
     private static final JSONCreator jsonCreator = new JSONCreator().addKeys("statuscode");
 
     public static void register(HttpServer httpServer) {
@@ -24,14 +25,20 @@ public class Member {
     private Member() {}
 
     private static void addResponseHeaders(HttpExchange httpExchange) {
-        String request = httpExchange.getRequestURI().toString();
         httpExchange.getResponseHeaders().add("Content-Type", "application/json");
-
-        debugRequest(logger, request);
     }
 
-    private static void debugRequest(Logger logger, String request) {
-        logger.debug("{} - was requested", request);
+    private static void writeResponse(HttpExchange httpExchange, String response) throws IOException {
+        httpExchange.sendResponseHeaders(200, response.length());
+
+        OutputStream outputStream = httpExchange.getResponseBody();
+        for(char write : response.toCharArray())
+            outputStream.write(write);
+        outputStream.close();
+    }
+
+    private static void debugRequest(URI requestURI) {
+        logger.debug("{} - was requested", requestURI);
     }
 
     private static class Join implements HttpHandler {
@@ -39,15 +46,15 @@ public class Member {
         public void handle(HttpExchange httpExchange) throws IOException {
             addResponseHeaders(httpExchange);
 
-            String response = new JSONCreator()
-                    .addKeys("statuscode", "response")
+            // user / group / role / token
+            URI requestURI = httpExchange.getRequestURI();
+            debugRequest(requestURI);
+
+            String response = jsonCreator
+                    .addKeys("response")
                     .addValue(201, "User API is not implemented yet!").toString();
 
-            httpExchange.sendResponseHeaders(200, response.length());
-
-            OutputStream outputStream = httpExchange.getResponseBody();
-            outputStream.write(response.getBytes());
-            outputStream.close();
+            writeResponse(httpExchange, response);
         }
     }
 
@@ -56,15 +63,15 @@ public class Member {
         public void handle(HttpExchange httpExchange) throws IOException {
             addResponseHeaders(httpExchange);
 
-            String response = new JSONCreator()
-                    .addKeys("statuscode", "response")
+            // user / group / token
+            URI requestURI = httpExchange.getRequestURI();
+            debugRequest(requestURI);
+
+            String response = jsonCreator
+                    .addKeys("response")
                     .addValue(201, "User API is not implemented yet!").toString();
 
-            httpExchange.sendResponseHeaders(200, response.length());
-
-            OutputStream outputStream = httpExchange.getResponseBody();
-            outputStream.write(response.getBytes());
-            outputStream.close();
+            writeResponse(httpExchange, response);
         }
     }
 
@@ -73,15 +80,15 @@ public class Member {
         public void handle(HttpExchange httpExchange) throws IOException {
             addResponseHeaders(httpExchange);
 
-            String response = new JSONCreator()
-                    .addKeys("statuscode", "response")
+            // user
+            URI requestURI = httpExchange.getRequestURI();
+            debugRequest(requestURI);
+
+            String response = jsonCreator
+                    .addKeys("response")
                     .addValue(201, "User API is not implemented yet!").toString();
 
-            httpExchange.sendResponseHeaders(200, response.length());
-
-            OutputStream outputStream = httpExchange.getResponseBody();
-            outputStream.write(response.getBytes());
-            outputStream.close();
+            writeResponse(httpExchange, response);
         }
     }
 
@@ -90,15 +97,15 @@ public class Member {
         public void handle(HttpExchange httpExchange) throws IOException {
             addResponseHeaders(httpExchange);
 
-            String response = new JSONCreator()
-                    .addKeys("statuscode", "response")
+            // user / group / token
+            URI requestURI = httpExchange.getRequestURI();
+            debugRequest(requestURI);
+
+            String response = jsonCreator
+                    .addKeys("response")
                     .addValue(201, "User API is not implemented yet!").toString();
 
-            httpExchange.sendResponseHeaders(200, response.length());
-
-            OutputStream outputStream = httpExchange.getResponseBody();
-            outputStream.write(response.getBytes());
-            outputStream.close();
+            writeResponse(httpExchange, response);
         }
     }
 }
