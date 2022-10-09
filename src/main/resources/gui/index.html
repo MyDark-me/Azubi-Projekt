@@ -1,35 +1,59 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome</title>
+    <title>AzubiProjekt</title>
     <style>
+        @font-face {
+            font-family:"rooney-sans";
+            src:url("https://use.typekit.net/af/186a4d/00000000000000007735a2e6/30/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3") format("woff2"),url("https://use.typekit.net/af/186a4d/00000000000000007735a2e6/30/d?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3") format("woff"),url("https://use.typekit.net/af/186a4d/00000000000000007735a2e6/30/a?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3") format("opentype");
+            font-display:auto;
+            font-style:normal;
+            font-weight:400;
+            font-stretch:normal;
+        }
+        body{
+            font-family: rooney-sans, sans-serif;
+
+        }
+        a:link, a:visited{
+            color: #dadada;
+            text-decoration: none;
+        }
         .dark{
-            background-color: #2f2f2f;
+            background-color: #3e3e3e;
+            color: #dadada;
         }
         .light{
-            background-color: #d2d2d2;
+            background-color: #dadada;
+            color: #3e3e3e;
         }
         .container{
+            margin: 5rem;
             display: flex;
             justify-content: center;
-            align-items: center;
-            he
+            justify-items: center;
         }
-        .box-item{
-            padding: 2rem;
+        .box{
+            width: 45%;
+            height: 250px;
+            border-radius: 10px;
+            box-shadow: 5px 5px 10px black;
+            text-align: center;
         }
     </style>
+    <link rel="stylesheet" href="https://use.typekit.net/aen2ilt.css">
 </head>
 <body class="dark">
-    <div class="container" style="height: 300px; width: 400px">
-        <div class="box-item light" style="border-radius: 5px;">
-            <h1>API Server</h1>
-            <hr>
-            <h3>The API Server is running please use /api</h3>
-        </div>
+<div class="container" >
+    <div class="light box">
+        <h1>API Server</h1>
+        <hr>
+        <h3>Dies ist ein Api-Server bitte nutzen Sie folgenden Link <br><a href="/api" style="color: #be3e3e;">API CallURL</a></h3>
     </div>
+</div>
+<footer style="text-align: center;">Made with ❤ by Sebastian Schindler, Paul Rakutt 2022 - <a href="https://dev-cloud.org/">dev-cloud.org</a></footer>
 </body>
 </html>
