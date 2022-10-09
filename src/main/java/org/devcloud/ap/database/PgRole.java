@@ -7,6 +7,7 @@ import org.hibernate.annotations.GenericGenerator;
 import java.io.Serializable;
 
 @RequiredArgsConstructor @NoArgsConstructor
+@Getter @Setter
 @Entity
 @Table(name = "pgRole")
 public class PgRole implements Serializable {
@@ -14,9 +15,9 @@ public class PgRole implements Serializable {
     @Id
     @GeneratedValue(generator = "generator")
     @Column(nullable = false, name = "role_id")
-    @Getter @Setter Integer id;
+    Integer id;
     @Column(nullable = false, name = "role_name")
-    @NonNull @Getter @Setter String name;
+    @NonNull String name;
     @Column(nullable = false, name = "role_color")
-    @NonNull @Getter @Setter Integer color;
+    @NonNull Integer color;
 }
