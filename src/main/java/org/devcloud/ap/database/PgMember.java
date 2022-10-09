@@ -3,6 +3,7 @@ package org.devcloud.ap.database;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 
 import java.io.Serializable;
 
@@ -10,13 +11,15 @@ import java.io.Serializable;
 @Table(name = "member")
 public class PgMember implements Serializable {
     @Id
-    @Column(name = "member_user")
+    @GenericGenerator(name = "generator", strategy = "increment")
+    @GeneratedValue(generator = "generator")
+    @Column(name = "user_id")
+    @Getter @Setter Integer id;
+    @JoinColumn(name = "user_id")
     @Getter @Setter PgUser user;
-    @Id
-    @Column(name = "member_group")
+    @JoinColumn(name = "group_id")
     @Getter @Setter PgGroup group;
-    @Id
-    @Column(name = "member_role")
+    @JoinColumn(name = "role_id")
     @Getter @Setter PgRole role;
     @Getter String table = "FROM member";
 }

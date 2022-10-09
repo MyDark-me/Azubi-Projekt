@@ -10,8 +10,8 @@ import java.io.Serializable;
 @Entity
 @Table(name = "role")
 public class PgRole implements Serializable {
-    @GenericGenerator(name = "generator", strategy = "increment")
     @Id
+    @GenericGenerator(name = "generator", strategy = "increment")
     @GeneratedValue(generator = "generator")
     @Column(name = "role_id")
     @Getter @Setter Integer id;
