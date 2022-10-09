@@ -50,7 +50,6 @@ public class HTTPServer {
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
             httpExchange.getResponseHeaders().add("Content-Type", "text/html; charset=utf-8");
-            String response = new String(Files.readAllBytes(Paths.get(Azubiprojekt.class.getClassLoader().getResource("gui/index.html").getPath())), StandardCharsets.UTF_8);
             String reqest = httpExchange.getRequestURI().toString();
 
             File index = new File(Azubiprojekt.class.getClassLoader().getResource("gui/index.html").getPath());
