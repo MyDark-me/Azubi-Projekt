@@ -24,5 +24,6 @@ public class Azubiprojekt {
             exception.printStackTrace();
         }
         sqlPostgres = new SQLPostgres("localhost:5432", "postgres", "password", "azubiprojekt");
+
     }
 }
