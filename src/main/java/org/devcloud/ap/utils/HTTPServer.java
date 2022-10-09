@@ -4,7 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import org.devcloud.ap.Azubiprojekt;
-import org.devcloud.ap.apicalls.Base;
+import org.devcloud.ap.apicalls.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,12 +30,10 @@ public class HTTPServer {
         server.createContext("/", new APIHandler()); //Create a new context for the API
 
         Base.register(server);
-        /*  // For Later Use
-        server.createContext("/api", new Base()); //Create a new context for the base api call
-        server.createContext("/api/group", new Group()); //Create a new context for the group api call
-        server.createContext("/api/role", new Role());  //Create a new context for the role api call
-        server.createContext("/api/member", new Member());  //Create a new context for the member api call
-        server.createContext("/api/member", new User());    //Create a new context for the user api call */
+        User.register(server);
+        Group.register(server);
+        Member.register(server);
+        Role.register(server);
 
         server.setExecutor(null);   //Create a new executor
         server.start(); //Start the server
