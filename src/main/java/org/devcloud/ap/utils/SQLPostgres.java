@@ -12,8 +12,9 @@ import org.slf4j.LoggerFactory;
 
 public class SQLPostgres {
 
-    Logger logger = LoggerFactory.getLogger(SQLPostgres.class);
+    static Logger logger = LoggerFactory.getLogger(SQLPostgres.class);
     @Getter SessionFactory sessionFactory;
+    @Getter boolean connection;
 
     public SQLPostgres(String host, String user, String password, String database) {
         String url = "jdbc:postgresql://%host%/%database%?ApplicationName=azubiprojekt";
@@ -32,8 +33,10 @@ public class SQLPostgres {
                     standardServiceRegistryBuilder.build()
             ).buildMetadata().buildSessionFactory();
             logger.info("SQL: SessionFactory wurde Erstellt");
-        } catch (Exception e) {
+        } catch (Exception exception) {
             logger.error("SQL: SessionFactory konnte nicht erstellt werden. Error: ");
+            exception.printStackTrace();
+            this.connection = false;
             Sentry.captureException(e);
         }
     }
