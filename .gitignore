@@ -37,3 +37,5 @@ build/
 
 
 /dependency-reduced-pom.xml
+
+logs/
