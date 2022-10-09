@@ -39,6 +39,8 @@ public class JSONCreator {
                 jsonObject.put(this.keyArray.get(i), aInteger);
             else if(value instanceof Long aLong)
                 jsonObject.put(this.keyArray.get(i), aLong);
+            else if(value instanceof Boolean aBool)
+                jsonObject.put(this.keyArray.get(i), aBool);
         }
         return jsonObject;
     }
