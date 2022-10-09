@@ -13,6 +13,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import static org.devcloud.ap.Azubiprojekt.logger;
+
 public class HTTPServer {
     private static HttpServer server;
 
@@ -23,7 +25,7 @@ public class HTTPServer {
      */
     public static void startServer() throws IOException {
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", 8001), 0); //Create a new server on port 8001
-        server.createContext("/base", new APIHandler()); //Create a new context for the API
+        server.createContext("/", new APIHandler()); //Create a new context for the API
 
         /*  // For Later Use
         server.createContext("/api", new Base()); //Create a new context for the base api call
@@ -46,13 +48,18 @@ public class HTTPServer {
     public static class APIHandler implements HttpHandler { //Create a new class for the HTTP handler and respond with the index.html
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
+            String reqest = httpExchange.getRequestURI().toString();
             httpExchange.getResponseHeaders().add("Content-Type", "text/html; charset=utf-8");
-            String response = new String(Files.readAllBytes(Paths.get(Azubiprojekt.class.getClassLoader().getResource("gui/index.html").getPath())), StandardCharsets.UTF_8);
+
+            File index = new File(Azubiprojekt.class.getClassLoader().getResource("gui/index.html").getPath());
+            String response = new String(Files.readAllBytes(Paths.get(index.getPath())), StandardCharsets.UTF_8);
 
             httpExchange.sendResponseHeaders(200, response.length());
             OutputStream outputStream = httpExchange.getResponseBody();
             outputStream.write(response.getBytes());
             outputStream.close();
+
+            logger.debug("{} - was requested", reqest);
         }
     }
 }
