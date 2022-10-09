@@ -1,23 +1,22 @@
 package org.devcloud.ap.database;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 
 import java.io.Serializable;
 
+@RequiredArgsConstructor @NoArgsConstructor
 @Entity
-@Table(name = "role")
+@Table(name = "pgRole")
 public class PgRole implements Serializable {
     @GenericGenerator(name = "generator", strategy = "increment")
     @Id
     @GeneratedValue(generator = "generator")
-    @Column(name = "role_id")
+    @Column(nullable = false, name = "role_id")
     @Getter @Setter Integer id;
-    @Column(name = "role_name")
-    @Getter @Setter String name;
-    @Column(name = "role_color")
-    @Getter @Setter Integer color;
-    @Getter String table = "FROM role";
+    @Column(nullable = false, name = "role_name")
+    @NonNull @Getter @Setter String name;
+    @Column(nullable = false, name = "role_color")
+    @NonNull @Getter @Setter Integer color;
 }

@@ -1,23 +1,22 @@
 package org.devcloud.ap.database;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 
 import java.io.Serializable;
 
+@RequiredArgsConstructor @NoArgsConstructor
 @Entity
-@Table(name = "group")
+@Table(name = "pgGroup")
 public class PgGroup implements Serializable {
     @GenericGenerator(name = "generator", strategy = "increment")
     @Id
     @GeneratedValue(generator = "generator")
-    @Column(name = "group_id")
+    @Column(nullable = false, name = "group_id")
     @Getter @Setter Integer id;
-    @Column(name = "group_name")
-    @Getter @Setter String name;
-    @Column(name = "group_color")
-    @Getter @Setter Integer color;
-    @Getter String table = "FROM group";
+    @Column(nullable = false, name = "group_name")
+    @NonNull @Getter @Setter String name;
+    @Column(nullable = false, name = "group_color")
+    @NonNull @Getter @Setter Integer color;
 }
