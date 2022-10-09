@@ -12,6 +12,7 @@ import java.io.IOException;
 
 public class Azubiprojekt {
 
+    @Getter static SQLPostgres sqlPostgres;
     private static final Logger logger = LoggerFactory.getLogger(Azubiprojekt.class);
     
     public static void main(String[] args) throws IOException {
