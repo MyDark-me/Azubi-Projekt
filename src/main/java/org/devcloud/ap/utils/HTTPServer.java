@@ -50,7 +50,7 @@ public class HTTPServer {
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
             httpExchange.getResponseHeaders().add("Content-Type", "text/html; charset=utf-8");
-            String reqest = httpExchange.getRequestURI().toString();
+            String request = httpExchange.getRequestURI().toString();
 
             File index = new File(Azubiprojekt.class.getClassLoader().getResource("gui/index.html").getPath());
             String response = new String(Files.readAllBytes(Paths.get(index.getPath())), StandardCharsets.UTF_8);
@@ -60,7 +60,7 @@ public class HTTPServer {
             outputStream.write(response.getBytes());
             outputStream.close();
 
-            logger.debug("{} - was requested", reqest);
+            logger.debug("{} - was requested", request);
         }
     }
 }
