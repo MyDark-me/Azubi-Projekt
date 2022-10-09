@@ -7,6 +7,7 @@ import org.hibernate.annotations.GenericGenerator;
 import java.io.Serializable;
 
 @RequiredArgsConstructor @NoArgsConstructor
+@Getter @Setter
 @Entity
 @Table(name = "pgUser")
 public class PgUser implements Serializable {
@@ -14,13 +15,13 @@ public class PgUser implements Serializable {
     @Id
     @GeneratedValue(generator = "generator")
     @Column(nullable = false, name = "user_id")
-    @Getter @Setter Integer id;
+    Integer id;
     @Column(nullable = false, name = "user_name")
-    @NonNull @Getter @Setter String name;
+    @NonNull String name;
     @Column(nullable = false, name = "user_password")
-    @NonNull @Getter @Setter String password;
+    @NonNull String password;
     @Column(nullable = false, name = "user_mail")
-    @NonNull @Getter @Setter String mail;
+    @NonNull String mail;
     @Column(nullable = false, name = "user_token")
-    @NonNull @Getter @Setter String token;
+    @NonNull String token;
 }
