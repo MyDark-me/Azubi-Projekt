@@ -35,7 +35,5 @@ build/
 .DS_Store
 .idea/
 
-src/main/HTTP Checks/
-/dependency-reduced-pom.xml
 
-logs/
+/dependency-reduced-pom.xml

@@ -57,11 +57,24 @@
             <artifactId>json</artifactId>
             <version>20220924</version>
         </dependency>
+        <!-- postgresql # SQL Datenbase -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.5.0</version>
+        </dependency>
         <!-- hibernate # SQL Model Manager -->
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-core</artifactId>
             <version>6.1.4.Final</version>
+        </dependency>
+        <!-- lombock # Annotation mapping -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.24</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

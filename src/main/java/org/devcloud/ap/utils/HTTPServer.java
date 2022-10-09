@@ -49,8 +49,8 @@ public class HTTPServer {
     public static class APIHandler implements HttpHandler { //Create a new class for the HTTP handler and respond with the index.html
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
-            String reqest = httpExchange.getRequestURI().toString();
             httpExchange.getResponseHeaders().add("Content-Type", "text/html; charset=utf-8");
+            String reqest = httpExchange.getRequestURI().toString();
 
             File index = new File(Azubiprojekt.class.getClassLoader().getResource("gui/index.html").getPath());
             String response = new String(Files.readAllBytes(Paths.get(index.getPath())), StandardCharsets.UTF_8);
