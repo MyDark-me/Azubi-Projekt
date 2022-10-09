@@ -5,6 +5,9 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import org.devcloud.ap.Azubiprojekt;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -15,6 +18,7 @@ import java.nio.file.Paths;
 
 public class HTTPServer {
     private static HttpServer server;
+    private static final Logger logger = LoggerFactory.getLogger(HTTPServer.class);
 
     /**
      * Starts the HTTP server
@@ -23,7 +27,7 @@ public class HTTPServer {
      */
     public static void startServer() throws IOException {
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", 8001), 0); //Create a new server on port 8001
-        server.createContext("/base", new APIHandler()); //Create a new context for the API
+        server.createContext("/", new APIHandler()); //Create a new context for the API
 
         /*  // For Later Use
         server.createContext("/api", new Base()); //Create a new context for the base api call
@@ -48,11 +52,17 @@ public class HTTPServer {
         public void handle(HttpExchange httpExchange) throws IOException {
             httpExchange.getResponseHeaders().add("Content-Type", "text/html; charset=utf-8");
             String response = new String(Files.readAllBytes(Paths.get(Azubiprojekt.class.getClassLoader().getResource("gui/index.html").getPath())), StandardCharsets.UTF_8);
+            String reqest = httpExchange.getRequestURI().toString();
+
+            File index = new File(Azubiprojekt.class.getClassLoader().getResource("gui/index.html").getPath());
+            String response = new String(Files.readAllBytes(Paths.get(index.getPath())), StandardCharsets.UTF_8);
 
             httpExchange.sendResponseHeaders(200, response.length());
             OutputStream outputStream = httpExchange.getResponseBody();
             outputStream.write(response.getBytes());
             outputStream.close();
+
+            logger.debug("{} - was requested", reqest);
         }
     }
 }
