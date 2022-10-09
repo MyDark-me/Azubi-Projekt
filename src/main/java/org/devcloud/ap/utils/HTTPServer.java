@@ -4,7 +4,6 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import org.devcloud.ap.Azubiprojekt;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
