@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import org.devcloud.ap.Azubiprojekt;
+import org.devcloud.ap.apicalls.Base;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,7 @@ public class HTTPServer {
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", 8001), 0); //Create a new server on port 8001
         server.createContext("/", new APIHandler()); //Create a new context for the API
 
+        Base.register(server);
         /*  // For Later Use
         server.createContext("/api", new Base()); //Create a new context for the base api call
         server.createContext("/api/group", new Group()); //Create a new context for the group api call
