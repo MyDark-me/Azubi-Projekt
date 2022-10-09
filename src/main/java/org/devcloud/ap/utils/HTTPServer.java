@@ -4,6 +4,8 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import org.devcloud.ap.Azubiprojekt;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,10 +15,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import static org.devcloud.ap.Azubiprojekt.logger;
-
 public class HTTPServer {
     private static HttpServer server;
+    private static final Logger logger = LoggerFactory.getLogger(HTTPServer.class);
 
     /**
      * Starts the HTTP server
