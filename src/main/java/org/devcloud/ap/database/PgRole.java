@@ -16,7 +16,7 @@ public class PgRole implements Serializable {
     @GeneratedValue(generator = "generator")
     @Column(nullable = false, name = "role_id")
     Integer id;
-    @Column(nullable = false, name = "role_name")
+    @Column(unique = true, nullable = false, name = "role_name")
     @NonNull String name;
     @Column(nullable = false, name = "role_color")
     @NonNull Integer color;

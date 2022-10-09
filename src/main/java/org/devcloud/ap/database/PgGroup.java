@@ -16,7 +16,7 @@ public class PgGroup implements Serializable {
     @GeneratedValue(generator = "generator")
     @Column(nullable = false, name = "group_id")
     Integer id;
-    @Column(nullable = false, name = "group_name")
+    @Column(unique = true, nullable = false, name = "group_name")
     @NonNull String name;
     @Column(nullable = false, name = "group_color")
     @NonNull Integer color;

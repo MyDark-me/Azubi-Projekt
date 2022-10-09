@@ -16,11 +16,12 @@ public class PgUser implements Serializable {
     @GeneratedValue(generator = "generator")
     @Column(nullable = false, name = "user_id")
     Integer id;
-    @Column(nullable = false, name = "user_name")
+
+    @Column(unique = true, nullable = false, name = "user_name")
     @NonNull String name;
     @Column(nullable = false, name = "user_password")
     @NonNull String password;
-    @Column(nullable = false, name = "user_mail")
+    @Column(unique = true, nullable = false, name = "user_mail")
     @NonNull String mail;
     @Column(nullable = false, name = "user_token")
     @NonNull String token;
