@@ -33,10 +33,12 @@ public class JSONCreator {
         JSONObject jsonObject = new JSONObject();
         for (int i = 0; i < this.keyArray.size(); i++) {
             Object value = this.valueArray.get(i);
-            if(value instanceof String string)
-                jsonObject.put(this.keyArray.get(i), string);
-            else if(value instanceof Integer integer)
-                jsonObject.put(this.keyArray.get(i), integer);
+            if(value instanceof String aString)
+                jsonObject.put(this.keyArray.get(i), aString);
+            else if(value instanceof Integer aInteger)
+                jsonObject.put(this.keyArray.get(i), aInteger);
+            else if(value instanceof Long aLong)
+                jsonObject.put(this.keyArray.get(i), aLong);
         }
         return jsonObject;
     }
