@@ -11,13 +11,18 @@ import org.slf4j.LoggerFactory;
 
 
 public class Azubiprojekt {
+
     @Getter static SQLPostgres sqlPostgres;
     private static final Logger logger = LoggerFactory.getLogger(Azubiprojekt.class);
-
-    public static void main(String[] args) throws IOException {
+    
+    public static void main(String[] args) {
         SentryLogger.startSentry();
         logger.info("Starting Azubiprojekt Server");
-        HTTPServer.startServer();
+        try {
+            HTTPServer.startServer();
+        } catch (IOException exception) {
+            exception.printStackTrace();
+        }
         sqlPostgres = new SQLPostgres("localhost:5432", "postgres", "password", "azubiprojekt");
     }
 }
