@@ -36,3 +36,6 @@ build/
 .idea/
 
 src/main/HTTP Checks/
+/dependency-reduced-pom.xml
+
+logs/
