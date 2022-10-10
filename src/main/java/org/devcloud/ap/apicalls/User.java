@@ -10,7 +10,6 @@ import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
@@ -38,6 +37,7 @@ public class User {
 
     private static void addResponseHeaders(HttpExchange httpExchange) {
         httpExchange.getResponseHeaders().add("Content-Type", "application/json");
+        httpExchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
     }
 
     private static void writeResponse(HttpExchange httpExchange, String response, int statusCode) throws IOException {
@@ -77,15 +77,15 @@ public class User {
         return feedback;
     }
 
+    private enum EUser {
+        USERNAME("username"), PASSWORD("password"), EMAIL("email");
+        final String name;
+        EUser(String name) { this.name = name; }
+        @Override
+        public String toString() {return name.toLowerCase(); }
+    }
+
     private static class Create implements HttpHandler {
-
-
-        private enum EUser {
-            NAME("name"), PASSWORD("password"), EMAIL("email");
-            final String name;
-            EUser(String name) { this.name = name; }
-            public String toString() {return name.toLowerCase(); }
-        }
 
         private enum EUserPattern {
             /*
@@ -101,12 +101,13 @@ public class User {
             PASSWORD("^(?=.*?[A-Z])(?=(.*[a-z]){1,})(?=(.*[\\W])*)(?!.*\\s).{8,}$"),
             EMAIL("^[a-zA-Z0-9.!#$%&'*+=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$");
 
-            final String pattern;
-            EUserPattern(String name) { this.pattern = name; }
-            public String toString() {return pattern; }
+            final String aPattern;
+            EUserPattern(String pattern) { this.aPattern = pattern; }
+            @Override
+            public String toString() {return aPattern; }
 
             public boolean match(CharSequence input) {
-                Pattern pattern = Pattern.compile("^[a-zA-Z0-9-_]{5,}$");
+                Pattern pattern = Pattern.compile(aPattern);
                 Matcher matcher = pattern.matcher(input);
                 return matcher.find();
             }
@@ -127,6 +128,15 @@ public class User {
         public void handle(HttpExchange httpExchange) throws IOException {
             addResponseHeaders(httpExchange);
 
+            if(!Azubiprojekt.getSqlPostgres().isConnection()) {
+                String response = getJSONCreator()
+                        .addKeys("message")
+                        .addValue(500, "Datenbank ist nicht Erreichbar!").toString();
+
+                writeResponse(httpExchange, response, 500);
+                return;
+            }
+
             // name / password / mail
             URI requestURI = httpExchange.getRequestURI();
             debugRequest(requestURI);
@@ -141,7 +151,7 @@ public class User {
                 return;
             }
 
-            if(!query.containsKey(EUser.NAME.toString()) || !query.containsKey(EUser.PASSWORD.toString()) || !query.containsKey(EUser.EMAIL.toString())) {
+            if(!query.containsKey(EUser.USERNAME.toString()) || !query.containsKey(EUser.PASSWORD.toString()) || !query.containsKey(EUser.EMAIL.toString())) {
                 String response = getJSONCreator()
                         .addKeys("message")
                         .addValue(400, "Es wurden nicht die richtigen Informationen mitgegeben.").toString();
@@ -150,7 +160,7 @@ public class User {
                 return;
             }
 
-            if(!EUserPattern.NAME.match(query.get(EUser.NAME.toString()))) {
+            if(!EUserPattern.NAME.match(query.get(EUser.USERNAME.toString()))) {
                 String response = getJSONCreator()
                         .addKeys("message")
                         .addValue(400, "Der Name entspricht nicht den Vorgaben.").toString();
@@ -178,12 +188,11 @@ public class User {
             }
 
             String randomToken = generateToken();
-            PgUser pgUser = new PgUser(EUser.NAME.toString(), EUser.PASSWORD.toString(), EUser.EMAIL.toString(), randomToken);
-
             Session session = Azubiprojekt.getSqlPostgres().openSession();
 
             session.beginTransaction();
-            
+            PgUser pgUser = new PgUser(EUser.USERNAME.toString(), EUser.PASSWORD.toString(), EUser.EMAIL.toString(), randomToken);
+
             session.persist(pgUser);
 
             session.getTransaction().commit();
@@ -193,7 +202,7 @@ public class User {
 
             String response = getJSONCreator()
                     .addKeys("message", "name", "email", "token")
-                    .addValue(201, "User wurde Erfolgreich erstellt!", query.get(EUser.NAME.toString()), query.get(EUser.EMAIL.toString()), randomToken ).toString();
+                    .addValue(201, "User wurde Erfolgreich erstellt!", query.get(EUser.USERNAME.toString()), query.get(EUser.EMAIL.toString()), randomToken ).toString();
 
             writeResponse(httpExchange, response, 200);
         }
@@ -238,15 +247,66 @@ public class User {
         public void handle(HttpExchange httpExchange) throws IOException {
             addResponseHeaders(httpExchange);
 
-            // name
+            // name / email
             URI requestURI = httpExchange.getRequestURI();
             debugRequest(requestURI);
 
-            String response = getJSONCreator()
-                    .addKeys("response")
-                    .addValue(201, "User API is not implemented yet!").toString();
+            HashMap<String, String> query = getEntities(requestURI);
+            if(query.isEmpty()) {
+                String response = getJSONCreator()
+                        .addKeys("message")
+                        .addValue(400, "Es wurden keine Informationen mitgegeben.").toString();
 
-            writeResponse(httpExchange, response, 200);
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            if(query.containsKey(EUser.USERNAME.toString())) {
+
+                Session session = Azubiprojekt.getSqlPostgres().openSession();
+                session.beginTransaction();
+                PgUser pgUser = session.find(PgUser.class, query.get(EUser.USERNAME.toString()));
+
+                session.persist(pgUser);
+
+                session.getTransaction().commit();
+                logger.debug("ID {} wurde mit dem User {} erfolgreich abgefragt. Suche Name", pgUser.getId(), pgUser.getName());
+                session.close();
+
+
+                String response = getJSONCreator()
+                        .addKeys("message", "name")
+                        .addValue(201, "User wurde Erfolgreich abgefragt!", pgUser.getName()).toString();
+
+                writeResponse(httpExchange, response, 201);
+                return;
+            } else
+
+            if(query.containsKey(EUser.EMAIL.toString())) {
+                Session session = Azubiprojekt.getSqlPostgres().openSession();
+                session.beginTransaction();
+                PgUser pgUser = session.find(PgUser.class, query.get(EUser.USERNAME.toString()));
+
+                session.persist(pgUser);
+
+                session.getTransaction().commit();
+                logger.debug("ID {} wurde mit dem User {} erfolgreich abgefragt. Suche email", pgUser.getId(), pgUser.getName());
+                session.close();
+
+
+                String response = getJSONCreator()
+                        .addKeys("message", "email")
+                        .addValue(201, "User wurde Erfolgreich abgefragt!", pgUser.getName()).toString();
+
+                writeResponse(httpExchange, response, 201);
+                return;
+            }
+
+            String response = getJSONCreator()
+                    .addKeys("message")
+                    .addValue(400, "Es wurden nicht die richtigen Informationen mitgegeben.").toString();
+
+            writeResponse(httpExchange, response, 400);
         }
     }
 
