@@ -23,6 +23,6 @@ public class PgUser implements Serializable {
     @NonNull String password;
     @Column(unique = true, nullable = false, name = "user_mail")
     @NonNull String mail;
-    @Column(nullable = false, name = "user_token")
+    @Column(unique = true, nullable = false, name = "user_token")
     @NonNull String token;
 }

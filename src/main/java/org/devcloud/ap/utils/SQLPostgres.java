@@ -33,6 +33,7 @@ public class SQLPostgres {
                     standardServiceRegistryBuilder.build()
             ).buildMetadata().buildSessionFactory();
             logger.info("SQL: SessionFactory wurde Erstellt");
+            this.connection = true;
         } catch (Exception exception) {
             logger.error("SQL: SessionFactory konnte nicht erstellt werden. Error: ");
             exception.printStackTrace();

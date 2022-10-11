@@ -7,11 +7,13 @@ import org.devcloud.ap.Azubiprojekt;
 import org.devcloud.ap.database.PgUser;
 import org.devcloud.ap.utils.JSONCreator;
 import org.hibernate.Session;
+import org.hibernate.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.security.SecureRandom;
 import java.util.HashMap;
@@ -191,7 +193,27 @@ public class User {
             Session session = Azubiprojekt.getSqlPostgres().openSession();
 
             session.beginTransaction();
-            PgUser pgUser = new PgUser(EUser.USERNAME.toString(), EUser.PASSWORD.toString(), EUser.EMAIL.toString(), randomToken);
+            PgUser pgUser = new PgUser(query.get(EUser.USERNAME.toString()), query.get(EUser.PASSWORD.toString()), query.get(EUser.EMAIL.toString()), randomToken);
+            Long count = 1L;
+            try {
+                String queryString = "select count(*) from PgUser pguser where pguser.user_name=:name";
+                Query queryDatabase = session.createQuery(queryString, Integer.class);
+                queryDatabase.setParameter("name", pgUser.getName());
+                count = (Long) queryDatabase.uniqueResult();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            logger.debug("Es wurden {} user gefunden.", count);
+
+            if(count > 0) {
+                session.close();
+                String response = getJSONCreator()
+                        .addKeys("message")
+                        .addValue(400, "Der Username wurde schon vergeben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
 
             session.persist(pgUser);
 
