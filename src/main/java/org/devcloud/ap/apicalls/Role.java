@@ -1,5 +1,6 @@
 package org.devcloud.ap.apicalls;
 
+import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -85,7 +86,7 @@ public class Role {
 
             String response = getJSONCreator(201)
                     .addKeys("response", "roles")
-                    .addValue("Du hast erfolgreich die Roles abgefragt!", new JSONObject(roles).toString()).toString();
+                    .addValue("Du hast erfolgreich die Roles abgefragt!", new Gson().toJson(roles)).toString();
 
             writeResponse(httpExchange, response, 201);
         }

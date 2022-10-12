@@ -1,5 +1,6 @@
 package org.devcloud.ap.apicalls;
 
+import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -443,14 +444,14 @@ public class Group {
             List<PgMember> pgMembers = queryDatabase.list();
             logger.debug("Lese member records...");
 
-            ArrayList memberList = new ArrayList<>();
+            ArrayList<String> memberList = new ArrayList<>();
             for (PgMember rawMembers : pgMembers) {
                 memberList.add(rawMembers.getMemberuser().getUsername());
             }
 
             String response = getJSONCreator(201)
                     .addKeys("response", "members")
-                    .addValue("Du hast erfolgreich die Members abgefragt!", new JSONObject(memberList).toString()).toString();
+                    .addValue("Du hast erfolgreich die Members abgefragt!", new Gson().toJson(memberList)).toString();
 
             writeResponse(httpExchange, response, 201);
         }
