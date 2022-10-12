@@ -231,8 +231,8 @@ public class User {
             session.persist(pgUser);
 
             session.getTransaction().commit();
-            logger.debug("ID {} wurde mit dem User {} erfolgreich erstellt.", pgUser.getUserid(), pgUser.getUsername());
             session.close();
+            logger.debug("ID {} wurde mit dem User {} erfolgreich erstellt.", pgUser.getUserid(), pgUser.getUsername());
 
 
             String response = getJSONCreator(201)
@@ -248,13 +248,69 @@ public class User {
         public void handle(HttpExchange httpExchange) throws IOException {
             addResponseHeaders(httpExchange);
 
-            // name / token
+            if(!Azubiprojekt.getSqlPostgres().isConnection()) {
+                String response = getJSONCreator(500)
+                        .addKeys(error)
+                        .addValue("Datenbank ist nicht Erreichbar!").toString();
+
+                writeResponse(httpExchange, response, 500);
+                return;
+            }
+
             URI requestURI = httpExchange.getRequestURI();
             debugRequest(requestURI);
 
+            HashMap<String, String> query = getEntities(requestURI);
+            if(query.isEmpty()) {
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Es wurden keine Informationen mitgegeben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            if(!query.containsKey(EUser.TOKEN.toString())) {
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Es wurden nicht die richtigen Informationen mitgegeben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            // öffne verbindung
+
+            Session session = Azubiprojekt.getSqlPostgres().openSession();
+            session.beginTransaction();
+
+            // hole user informationen
+            String queryString = "FROM PgUser pguser WHERE pguser.usertoken= :usertoken";
+            Query queryDatabase = session.createQuery(queryString, PgUser.class);
+            queryDatabase.setParameter("usertoken", query.get(EUser.TOKEN.toString()));
+            PgUser pgUser = (PgUser) queryDatabase.uniqueResult();
+
+            if(pgUser == null) {
+                session.close();
+                // user existiert nicht
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Der Token ist nicht gültig.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            session.remove(pgUser);
+            session.getTransaction().commit();
+            session.close();
+
+            logger.debug("Der benutzer dem den token {} gehört hatte wurde gelöscht.", query.get(EUser.TOKEN.toString()));
+
             String response = getJSONCreator(201)
-                    .addKeys("response")
-                    .addValue("User API is not implemented yet!").toString();
+                    .addKeys("success")
+                    .addValue( "User wurde erfolgreich gelöscht!").toString();
+
 
             writeResponse(httpExchange, response, 200);
         }
@@ -369,6 +425,7 @@ public class User {
 
             session.merge(pgUser);
             session.getTransaction().commit();
+            session.close();
 
             logger.debug("ID {} wurde mit dem User {} ein neuer Token gesetzt und Informationen aktualisiert.", pgUser.getUserid(), pgUser.getUsername());
 
@@ -477,7 +534,9 @@ public class User {
             pgUser.setUsertoken(randomToken);
 
             session.merge(pgUser);
+
             session.getTransaction().commit();
+            session.close();
 
             logger.debug("ID {} wurde mit dem User {} ein neuer Token gesetzt.", pgUser.getUserid(), pgUser.getUsername());
 

@@ -50,17 +50,17 @@ public class Azubiprojekt {
         pgRoles.forEach(pgRole -> pgRolesName.add(pgRole.getRolename()));
 
         if(!pgRolesName.contains("Member")) {
-            PgRole memberRole = new PgRole("Member", Color.GRAY.toString());
+            PgRole memberRole = new PgRole("Member", "GRAY");
             session.persist(memberRole);
             logger.debug("Role Member wird erstellt");
         }
         if(!pgRolesName.contains("Mod")) {
-            PgRole moderatorRole = new PgRole("Mod", Color.BLUE.toString());
+            PgRole moderatorRole = new PgRole("Mod", "BLUE");
             session.persist(moderatorRole);
             logger.debug("Role Mod wird erstellt");
         }
         if(!pgRolesName.contains("Admin")) {
-            PgRole administratorRole = new PgRole("Admin", Color.RED.toString());
+            PgRole administratorRole = new PgRole("Admin", "RED");
             session.persist(administratorRole);
             logger.debug("Role Admin wird erstellt");
         }

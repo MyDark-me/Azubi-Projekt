@@ -11,13 +11,16 @@ import org.devcloud.ap.database.PgUser;
 import org.devcloud.ap.utils.JSONCreator;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -123,6 +126,8 @@ public class Group {
     private static class Create implements HttpHandler {
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
+            addResponseHeaders(httpExchange);
+
             if(!Azubiprojekt.getSqlPostgres().isConnection()) {
                 String response = getJSONCreator(500)
                         .addKeys(error)
@@ -240,13 +245,130 @@ public class Group {
         public void handle(HttpExchange httpExchange) throws IOException {
             addResponseHeaders(httpExchange);
 
-            // name / token
+            if(!Azubiprojekt.getSqlPostgres().isConnection()) {
+                String response = getJSONCreator(500)
+                        .addKeys(error)
+                        .addValue("Datenbank ist nicht Erreichbar!").toString();
+
+                writeResponse(httpExchange, response, 500);
+                return;
+            }
+
             URI requestURI = httpExchange.getRequestURI();
             debugRequest(requestURI);
 
+            // Prüfe ob alles den syntax vorgibt
+
+            HashMap<String, String> query = getEntities(requestURI);
+            if(query.isEmpty()) {
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Es wurden keine Informationen mitgegeben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            if(!query.containsKey(EGroup.NAME.toString()) || !query.containsKey(EUser.TOKEN.toString())) {
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Es wurden nicht die richtigen Informationen mitgegeben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            if(EGroupPattern.NAME.isMatch(query.get(EGroup.NAME.toString()))) {
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Der Name entspricht nicht den Vorgaben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            // öffne verbindung
+
+            Session session = Azubiprojekt.getSqlPostgres().openSession();
+            session.beginTransaction();
+
+            logger.debug("Suche Group");
+            // hole role
+            String queryString = "FROM PgGroup pggroup WHERE pggroup.groupname= :groupname";
+            Query queryDatabase = session.createQuery(queryString, PgGroup.class);
+            queryDatabase.setParameter("groupname", query.get(EGroup.NAME.toString()));
+            PgGroup pgGroup = (PgGroup) queryDatabase.uniqueResult();
+
+            if(pgGroup == null) {
+                session.close();
+                // user existiert nicht
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Die Gruppe existiert nicht.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            logger.debug("Suche User mit dem Token");
+            // hole user
+            queryString = "FROM PgUser pguser WHERE pguser.usertoken= :usertoken";
+            queryDatabase = session.createQuery(queryString, PgUser.class);
+            queryDatabase.setParameter("usertoken", query.get(EUser.TOKEN.toString()));
+            PgUser pgUser = (PgUser) queryDatabase.uniqueResult();
+
+            if(pgUser == null) {
+                session.close();
+                // user existiert nicht
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Der Token ist nicht gültig.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            logger.debug("Suche Member mit dem User und Gruppe");
+            // hole member
+            queryString = "FROM PgMeber pgmember WHERE pgmember.memberuser= :user AND pgmember.membergroup= :group";
+            queryDatabase = session.createQuery(queryString, PgMember.class);
+            queryDatabase.setParameter("user", pgUser);
+            queryDatabase.setParameter("group", pgGroup);
+            PgMember pgMember = (PgMember) queryDatabase.uniqueResult();
+
+            if(pgMember == null) {
+                session.close();
+                // user existiert nicht
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Du bist nicht Mitglied.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            if(pgMember.getMemberrole().getRolename() != "Admin") {
+                session.close();
+                // user existiert nicht
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Du bist nicht Admin.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+
+            // remove group
+            session.remove(pgGroup);
+
+            session.getTransaction().commit();
+            session.close();
+
+
             String response = getJSONCreator(201)
-                    .addKeys("response")
-                    .addValue("User API is not implemented yet!").toString();
+                    .addKeys("success", "name")
+                    .addValue( "Gruppe wurde Erfolgreich gelöscht!", query.get(EGroup.NAME.toString())).toString();
 
             writeResponse(httpExchange, response, 201);
         }
@@ -257,13 +379,80 @@ public class Group {
         public void handle(HttpExchange httpExchange) throws IOException {
             addResponseHeaders(httpExchange);
 
-            // name / token
+            if(!Azubiprojekt.getSqlPostgres().isConnection()) {
+                String response = getJSONCreator(500)
+                        .addKeys(error)
+                        .addValue("Datenbank ist nicht Erreichbar!").toString();
+
+                writeResponse(httpExchange, response, 500);
+                return;
+            }
+
             URI requestURI = httpExchange.getRequestURI();
             debugRequest(requestURI);
 
+            HashMap<String, String> query = getEntities(requestURI);
+            if(query.isEmpty()) {
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Es wurden keine Informationen mitgegeben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            if(!query.containsKey(EGroup.NAME.toString())) {
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Es wurden nicht die richtigen Informationen mitgegeben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            if(EGroupPattern.NAME.isMatch(query.get(EGroup.NAME.toString()))) {
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Der Name entspricht nicht den Vorgaben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            Session session = Azubiprojekt.getSqlPostgres().openSession();
+
+            logger.debug("Suche Group");
+            // hole role
+            String queryString = "FROM PgGroup pggroup WHERE pggroup.groupname= :groupname";
+            Query queryDatabase = session.createQuery(queryString, PgGroup.class);
+            queryDatabase.setParameter("groupname", query.get(EGroup.NAME.toString()));
+            PgGroup pgGroup = (PgGroup) queryDatabase.uniqueResult();
+
+            if(pgGroup == null) {
+                session.close();
+                // user existiert nicht
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Die Gruppe existiert nicht.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            queryString = "FROM PgMember pgmember WHERE pgmember.membergroup= :group";
+            queryDatabase = session.createQuery(queryString, PgRole.class);
+            queryDatabase.setParameter("group", pgGroup);
+            List<PgMember> pgMembers = queryDatabase.list();
+            logger.debug("Lese member records...");
+
+            ArrayList memberList = new ArrayList<>();
+            for (PgMember rawMembers : pgMembers) {
+                memberList.add(rawMembers.getMemberuser().getUsername());
+            }
+
             String response = getJSONCreator(201)
-                    .addKeys("response")
-                    .addValue("User API is not implemented yet!").toString();
+                    .addKeys("response", "members")
+                    .addValue("Du hast erfolgreich die Members abgefragt!", new JSONObject(memberList).toString()).toString();
 
             writeResponse(httpExchange, response, 201);
         }
