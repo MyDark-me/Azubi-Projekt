@@ -56,12 +56,19 @@ public class Role {
         public void handle(HttpExchange httpExchange) throws IOException {
             addResponseHeaders(httpExchange);
 
+            if(!Azubiprojekt.getSqlPostgres().isConnection()) {
+                String response = getJSONCreator(500)
+                        .addKeys(error)
+                        .addValue("Datenbank ist nicht Erreichbar!").toString();
+
+                writeResponse(httpExchange, response, 500);
+                return;
+            }
+
             URI requestURI = httpExchange.getRequestURI();
             debugRequest(requestURI);
 
-
             Session session = Azubiprojekt.getSqlPostgres().openSession();
-
 
             Query query = session.createQuery("FROM PgRole", PgRole.class);
             List<PgRole> pgRoles = query.list();
