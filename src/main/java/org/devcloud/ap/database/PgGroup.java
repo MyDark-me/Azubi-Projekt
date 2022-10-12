@@ -19,5 +19,5 @@ public class PgGroup implements Serializable {
     @Column(unique = true, nullable = false, name = "groupname")
     @NonNull String groupname;
     @Column(nullable = false, name = "groupcolor")
-    @NonNull Integer groupcolor;
+    @NonNull String groupcolor;
 }
