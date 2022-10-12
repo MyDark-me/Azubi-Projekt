@@ -35,8 +35,6 @@ public class Group {
 
     private Group() {}
 
-
-
     private final static String error = "error";
 
     private static void addResponseHeaders(HttpExchange httpExchange) {
