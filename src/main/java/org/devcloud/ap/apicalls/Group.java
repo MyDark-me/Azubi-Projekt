@@ -176,6 +176,7 @@ public class Group {
                     query.get(EGroup.COLOR.toString())
             );
 
+            logger.debug("Suche Role Admin");
             // hole role
             String queryString = "FROM PgRole pgrole WHERE pgrole.rolename= :rolename";
             Query queryDatabase = session.createQuery(queryString, PgRole.class);
@@ -193,10 +194,11 @@ public class Group {
                 return;
             }
 
+            logger.debug("Suche User mit dem Token");
             // hole user
-            queryString = "FROM PgUser pguser WHERE pguser.usertoken= :token";
+            queryString = "FROM PgUser pguser WHERE pguser.usertoken= :usertoken";
             queryDatabase = session.createQuery(queryString, PgUser.class);
-            queryDatabase.setParameter("token", query.get(EUser.TOKEN.toString()));
+            queryDatabase.setParameter("usertoken", query.get(EUser.TOKEN.toString()));
             PgUser pgUser = (PgUser) queryDatabase.uniqueResult();
 
             if(pgUser == null) {
@@ -210,8 +212,9 @@ public class Group {
                 return;
             }
 
+            logger.debug("Erstelle Member");
             // erstelle member
-            PgMember pgMember = new PgMember(pgUser.getUserid(), pgGroup.getGroupid(), pgRole.getRoleid());
+            PgMember pgMember = new PgMember(pgUser, pgGroup, pgRole);
 
             // add group
             session.persist(pgGroup);
@@ -226,9 +229,9 @@ public class Group {
 
             String response = getJSONCreator(201)
                     .addKeys("success", "name")
-                    .addValue( "Group wurde Erfolgreich erstellt!", query.get(EGroup.NAME.toString())).toString();
+                    .addValue( "Gruppe wurde Erfolgreich erstellt!", query.get(EGroup.NAME.toString())).toString();
 
-            writeResponse(httpExchange, response, 200);
+            writeResponse(httpExchange, response, 201);
         }
     }
 

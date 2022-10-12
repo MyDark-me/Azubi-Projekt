@@ -16,13 +16,10 @@ public class PgMember implements Serializable {
     @GeneratedValue(generator = "generator")
     @Column(name = "memberid")
     Integer memberid;
-    @JoinColumn(name = "userid")
-    @Column(name = "memberuser")
-    @NonNull Integer memberuser;
-    @JoinColumn(name = "groupid")
-    @Column(name = "membergroup")
-    @NonNull Integer membergroup;
-    @JoinColumn(name = "roleid")
-    @Column(name = "memberrole")
-    @NonNull Integer memberrole;
+    @JoinColumn
+    @NonNull PgUser memberuser;
+    @JoinColumn
+    @NonNull PgGroup membergroup;
+    @JoinColumn
+    @NonNull PgRole memberrole;
 }
