@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 
+import java.awt.*;
 import java.io.Serializable;
 
 @RequiredArgsConstructor @NoArgsConstructor
@@ -19,5 +20,5 @@ public class PgRole implements Serializable {
     @Column(unique = true, nullable = false, name = "rolename")
     @NonNull String rolename;
     @Column(nullable = false, name = "rolecolor")
-    @NonNull Integer rolecolor;
+    @NonNull String rolecolor;
 }
