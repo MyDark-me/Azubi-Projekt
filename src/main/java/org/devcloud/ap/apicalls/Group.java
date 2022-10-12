@@ -12,7 +12,6 @@ import org.devcloud.ap.database.PgUser;
 import org.devcloud.ap.utils.JSONCreator;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -180,10 +179,30 @@ public class Group {
                     query.get(EGroup.COLOR.toString())
             );
 
+            // prüfe ob die gruppe existiert
+            String queryString = "SELECT COUNT(*) FROM PgGroup pggroup WHERE pggroup.groupname= :name";
+            Query queryDatabase = session.createQuery(queryString, Long.class);
+            queryDatabase.setParameter("name", pgGroup.getGroupname());
+            Long count = (Long) queryDatabase.uniqueResult();
+
+            logger.debug("Es wurden {} gruppen gefunden.", count);
+
+            if(count > 0) {
+                // user exist and close session
+                session.close();
+
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Der Gruppenname wurde schon vergeben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
             logger.debug("Suche Role Admin");
             // hole role
-            String queryString = "FROM PgRole pgrole WHERE pgrole.rolename= :rolename";
-            Query queryDatabase = session.createQuery(queryString, PgRole.class);
+            queryString = "FROM PgRole pgrole WHERE pgrole.rolename= :rolename";
+            queryDatabase = session.createQuery(queryString, PgRole.class);
             queryDatabase.setParameter("rolename", "Admin");
             PgRole pgRole = (PgRole) queryDatabase.uniqueResult();
 

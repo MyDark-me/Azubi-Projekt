@@ -364,7 +364,7 @@ public class Member {
 
             ArrayList<String> memberList = new ArrayList<>();
             for (PgMember rawMembers : pgMembers) {
-                memberList.add(rawMembers.getMemberuser().getUsername());
+                memberList.add(rawMembers.getMembergroup().getGroupname());
             }
 
             String response = getJSONCreator(201)
