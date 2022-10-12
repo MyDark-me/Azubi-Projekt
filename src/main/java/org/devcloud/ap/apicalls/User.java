@@ -330,14 +330,54 @@ public class User {
             Session session = Azubiprojekt.getSqlPostgres().openSession();
             session.beginTransaction();
 
-            session.close();
+            // hole mir die user informationen
+            String queryString = "FROM PgUser pguser WHERE pguser.username= :username";
+            Query queryDatabase = session.createQuery(queryString, PgUser.class);
+            queryDatabase.setParameter("username", query.get(EUser.USERNAME.toString()));
+            PgUser pgUser = (PgUser) queryDatabase.uniqueResult();
+
+            if(pgUser == null) {
+                session.close();
+                // user existiert nicht
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Der Username existiert nicht.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            logger.debug("Es wurden der User {} gefunden.", pgUser.getUsername());
+
+            // Passwort prüfen
+            if(!query.get(EUser.PASSWORD.toString()).equals(pgUser.getUserpassword())) {
+                session.close();
+                // passwort falsch
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Der Username oder das Passwort ist falsch.").toString();
+
+                writeResponse(httpExchange, response, 400);
+            }
+
+            // new random token
+            String randomToken = createToken();
+            pgUser.setUsertoken(randomToken);
+
+            pgUser.setUsermail(query.get(EUser.EMAIL.toString()));
+            pgUser.setUserpassword(query.get(EUser.PASSWORD.toString()));
+
+            session.merge(pgUser);
+            session.getTransaction().commit();
+
+            logger.debug("ID {} wurde mit dem User {} ein neuer Token gesetzt und Informationen aktualisiert.", pgUser.getUserid(), pgUser.getUsername());
 
 
-            String response = getJSONCreator(400)
-                    .addKeys(error)
-                    .addValue("User API is not implemented yet!").toString();
+            String response = getJSONCreator(201)
+                    .addKeys("success", "name", "email", "token")
+                    .addValue( "User hat sich Erfolgreich bearbeitet!", query.get(EUser.USERNAME.toString()), query.get(EUser.EMAIL.toString()), randomToken ).toString();
 
-            writeResponse(httpExchange, response, 400);
+            writeResponse(httpExchange, response, 200);
         }
     }
 
@@ -402,7 +442,7 @@ public class User {
             Session session = Azubiprojekt.getSqlPostgres().openSession();
             session.beginTransaction();
 
-            // prüfe ob der user existiert
+            // hole mir die user informationen
             String queryString = "FROM PgUser pguser WHERE pguser.username= :username";
             Query queryDatabase = session.createQuery(queryString, PgUser.class);
             queryDatabase.setParameter("username", query.get(EUser.USERNAME.toString()));
@@ -439,8 +479,7 @@ public class User {
             session.merge(pgUser);
             session.getTransaction().commit();
 
-            logger.debug("ID {} wurde mit dem User {} ein neuer token gesetzt.", pgUser.getUserid(), pgUser.getUsername());
-
+            logger.debug("ID {} wurde mit dem User {} ein neuer Token gesetzt.", pgUser.getUserid(), pgUser.getUsername());
 
 
             String response = getJSONCreator(201)
