@@ -26,7 +26,6 @@ public class User {
         httpServer.createContext("/api/user/create", new Create());
         httpServer.createContext("/api/user/delete", new Delete());
         httpServer.createContext("/api/user/edit", new Edit());
-        httpServer.createContext("/api/user/data", new Data());
         httpServer.createContext("/api/user/login", new Login());
     }
 
@@ -81,7 +80,7 @@ public class User {
     }
 
     private enum EUser {
-        USERNAME("username"), PASSWORD("password"), EMAIL("email");
+        USERNAME("username"), PASSWORD("password"), EMAIL("email"), TOKEN("token");
         final String name;
         EUser(String name) { this.name = name; }
         @Override
@@ -117,18 +116,18 @@ public class User {
         }
     }
 
-    private static class Create implements HttpHandler {
+    private static final String TOKEN_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-        private static final String TOKEN_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-        private static String createToken() {
-            StringBuilder sb = new StringBuilder();
-            SecureRandom random = new SecureRandom();
-            for (int i = 0; i < 64; i++) {
-                sb.append(TOKEN_CHARS.charAt(random.nextInt(TOKEN_CHARS.length())));
-            }
-            return sb.toString();
+    private static String createToken() {
+        StringBuilder sb = new StringBuilder();
+        SecureRandom random = new SecureRandom();
+        for (int i = 0; i < 64; i++) {
+            sb.append(TOKEN_CHARS.charAt(random.nextInt(TOKEN_CHARS.length())));
         }
+        return sb.toString();
+    }
+
+    private static class Create implements HttpHandler {
 
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
@@ -266,81 +265,77 @@ public class User {
         public void handle(HttpExchange httpExchange) throws IOException {
             addResponseHeaders(httpExchange);
 
-            // name / password / mail / token
+            if(!Azubiprojekt.getSqlPostgres().isConnection()) {
+                String response = getJSONCreator(500)
+                        .addKeys(error)
+                        .addValue("Datenbank ist nicht Erreichbar!").toString();
+
+                writeResponse(httpExchange, response, 500);
+                return;
+            }
+
             URI requestURI = httpExchange.getRequestURI();
             debugRequest(requestURI);
 
-            String response = getJSONCreator(201)
-                    .addKeys("response")
-                    .addValue("User API is not implemented yet!").toString();
-
-            writeResponse(httpExchange, response, 200);
-        }
-    }
-
-    private static class Data implements HttpHandler {
-        @Override
-        public void handle(HttpExchange httpExchange) throws IOException {
-            addResponseHeaders(httpExchange);
-
-            // name / email
-            URI requestURI = httpExchange.getRequestURI();
-            debugRequest(requestURI);
+            // Prüfe ob alles den syntax vorgibt
 
             HashMap<String, String> query = getEntities(requestURI);
             if(query.isEmpty()) {
                 String response = getJSONCreator(400)
-                        .addKeys("message")
+                        .addKeys(error)
                         .addValue("Es wurden keine Informationen mitgegeben.").toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
             }
 
-            if(query.containsKey(EUser.USERNAME.toString())) {
+            if(!query.containsKey(EUser.USERNAME.toString()) || !query.containsKey(EUser.PASSWORD.toString()) || !query.containsKey(EUser.EMAIL.toString())) {
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Es wurden nicht die richtigen Informationen mitgegeben.").toString();
 
-                Session session = Azubiprojekt.getSqlPostgres().openSession();
-                session.beginTransaction();
-                PgUser pgUser = session.find(PgUser.class, query.get(EUser.USERNAME.toString()));
-
-                session.persist(pgUser);
-
-                session.getTransaction().commit();
-                logger.debug("ID {} wurde mit dem User {} erfolgreich abgefragt. Suche Name", pgUser.getUserid(), pgUser.getUsername());
-                session.close();
-
-
-                String response = getJSONCreator(201)
-                        .addKeys("message", "name")
-                        .addValue( "User wurde Erfolgreich abgefragt!", pgUser.getUsername()).toString();
-
-                writeResponse(httpExchange, response, 201);
-                return;
-            } else
-
-            if(query.containsKey(EUser.EMAIL.toString())) {
-                Session session = Azubiprojekt.getSqlPostgres().openSession();
-                session.beginTransaction();
-                PgUser pgUser = session.find(PgUser.class, query.get(EUser.USERNAME.toString()));
-
-                session.persist(pgUser);
-
-                session.getTransaction().commit();
-                logger.debug("ID {} wurde mit dem User {} erfolgreich abgefragt. Suche email", pgUser.getUserid(), pgUser.getUsername());
-                session.close();
-
-
-                String response = getJSONCreator(201)
-                        .addKeys("message", "email")
-                        .addValue( "User wurde Erfolgreich abgefragt!", pgUser.getUsername()).toString();
-
-                writeResponse(httpExchange, response, 201);
+                writeResponse(httpExchange, response, 400);
                 return;
             }
 
+            if(EUserPattern.NAME.isMatch(query.get(EUser.USERNAME.toString()))) {
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Der Name entspricht nicht den Vorgaben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            if(EUserPattern.PASSWORD.isMatch(query.get(EUser.PASSWORD.toString()))) {
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Das Passwort entspricht nicht den Vorgaben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            if(EUserPattern.EMAIL.isMatch(query.get(EUser.EMAIL.toString()))) {
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Die E-Mail entspricht nicht den Vorgaben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            // öffne verbindung
+
+            Session session = Azubiprojekt.getSqlPostgres().openSession();
+            session.beginTransaction();
+
+            session.close();
+
+
             String response = getJSONCreator(400)
-                    .addKeys("message")
-                    .addValue( "Es wurden nicht die richtigen Informationen mitgegeben.").toString();
+                    .addKeys(error)
+                    .addValue("User API is not implemented yet!").toString();
 
             writeResponse(httpExchange, response, 400);
         }
@@ -351,13 +346,106 @@ public class User {
         public void handle(HttpExchange httpExchange) throws IOException {
             addResponseHeaders(httpExchange);
 
-            // name / mail / password
+            if(!Azubiprojekt.getSqlPostgres().isConnection()) {
+                String response = getJSONCreator(500)
+                        .addKeys(error)
+                        .addValue("Datenbank ist nicht Erreichbar!").toString();
+
+                writeResponse(httpExchange, response, 500);
+                return;
+            }
+
             URI requestURI = httpExchange.getRequestURI();
             debugRequest(requestURI);
 
+            // Prüfe ob alles den syntax vorgibt
+
+            HashMap<String, String> query = getEntities(requestURI);
+            if(query.isEmpty()) {
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Es wurden keine Informationen mitgegeben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            if(!query.containsKey(EUser.USERNAME.toString()) || !query.containsKey(EUser.PASSWORD.toString())) {
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Es wurden nicht die richtigen Informationen mitgegeben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            if(EUserPattern.NAME.isMatch(query.get(EUser.USERNAME.toString()))) {
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Der Name entspricht nicht den Vorgaben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            if(EUserPattern.PASSWORD.isMatch(query.get(EUser.PASSWORD.toString()))) {
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Das Passwort entspricht nicht den Vorgaben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            // öffne verbindung
+
+            Session session = Azubiprojekt.getSqlPostgres().openSession();
+            session.beginTransaction();
+
+            // prüfe ob der user existiert
+            String queryString = "FROM PgUser pguser WHERE pguser.username= :username";
+            Query queryDatabase = session.createQuery(queryString, PgUser.class);
+            queryDatabase.setParameter("username", query.get(EUser.USERNAME.toString()));
+            PgUser pgUser = (PgUser) queryDatabase.uniqueResult();
+
+            if(pgUser == null) {
+                session.close();
+                // user existiert nicht
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Der Username oder das Passwort ist falsch.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            logger.debug("Es wurden der User {} gefunden.", pgUser.getUsername());
+
+            // Passwort prüfen
+            if(!query.get(EUser.PASSWORD.toString()).equals(pgUser.getUserpassword())) {
+                session.close();
+                // passwort falsch
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Der Username oder das Passwort ist falsch.").toString();
+
+                writeResponse(httpExchange, response, 400);
+            }
+
+            // new random token
+            String randomToken = createToken();
+            pgUser.setUsertoken(randomToken);
+
+            session.merge(pgUser);
+            session.getTransaction().commit();
+
+            logger.debug("ID {} wurde mit dem User {} ein neuer token gesetzt.", pgUser.getUserid(), pgUser.getUsername());
+
+
+
             String response = getJSONCreator(201)
-                    .addKeys("response")
-                    .addValue("User API is not implemented yet!").toString();
+                    .addKeys("success", "name", "email", "token")
+                    .addValue( "User hat sich Erfolgreich eingeloggt!", query.get(EUser.USERNAME.toString()), query.get(EUser.EMAIL.toString()), randomToken ).toString();
 
             writeResponse(httpExchange, response, 200);
         }
