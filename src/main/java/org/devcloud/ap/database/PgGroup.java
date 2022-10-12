@@ -9,15 +9,15 @@ import java.io.Serializable;
 @RequiredArgsConstructor @NoArgsConstructor
 @Getter @Setter
 @Entity
-@Table(name = "pgGroup")
+@Table(name = "PgGroup")
 public class PgGroup implements Serializable {
     @GenericGenerator(name = "generator", strategy = "increment")
     @Id
     @GeneratedValue(generator = "generator")
-    @Column(nullable = false, name = "group_id")
-    Integer id;
-    @Column(unique = true, nullable = false, name = "group_name")
-    @NonNull String name;
-    @Column(nullable = false, name = "group_color")
-    @NonNull Integer color;
+    @Column(nullable = false, name = "groupid")
+    Integer groupid;
+    @Column(unique = true, nullable = false, name = "groupname")
+    @NonNull String groupname;
+    @Column(nullable = false, name = "groupcolor")
+    @NonNull Integer groupcolor;
 }

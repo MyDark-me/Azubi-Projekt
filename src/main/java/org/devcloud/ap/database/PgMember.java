@@ -9,20 +9,20 @@ import java.io.Serializable;
 @RequiredArgsConstructor @NoArgsConstructor
 @Getter @Setter
 @Entity
-@Table(name = "pgMember")
+@Table(name = "PgMember")
 public class PgMember implements Serializable {
     @Id
     @GenericGenerator(name = "generator", strategy = "increment")
     @GeneratedValue(generator = "generator")
-    @Column(name = "member_id")
-    Integer id;
-    @JoinColumn(name = "user_id")
-    @Column(name = "member_user")
-    @NonNull PgUser user;
-    @JoinColumn(name = "group_id")
-    @Column(name = "member_group")
-    @NonNull PgGroup group;
-    @JoinColumn(name = "role_id")
-    @Column(name = "member_role")
-    @NonNull PgRole role;
+    @Column(name = "memberid")
+    Integer memberid;
+    @JoinColumn(name = "userid")
+    @Column(name = "memberuser")
+    @NonNull Integer memberuser;
+    @JoinColumn(name = "groupid")
+    @Column(name = "membergroup")
+    @NonNull Integer membergroup;
+    @JoinColumn(name = "roleid")
+    @Column(name = "memberrole")
+    @NonNull Integer memberrole;
 }

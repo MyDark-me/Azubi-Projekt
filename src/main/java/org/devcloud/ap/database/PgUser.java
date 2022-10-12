@@ -9,20 +9,20 @@ import java.io.Serializable;
 @RequiredArgsConstructor @NoArgsConstructor
 @Getter @Setter
 @Entity
-@Table(name = "pgUser")
+@Table(name = "PgUser")
 public class PgUser implements Serializable {
     @GenericGenerator(name = "generator", strategy = "increment")
     @Id
     @GeneratedValue(generator = "generator")
-    @Column(nullable = false, name = "user_id")
-    Integer id;
+    @Column(nullable = false, name = "userid")
+    Integer userid;
 
-    @Column(unique = true, nullable = false, name = "user_name")
-    @NonNull String name;
-    @Column(nullable = false, name = "user_password")
-    @NonNull String password;
-    @Column(unique = true, nullable = false, name = "user_mail")
-    @NonNull String mail;
-    @Column(unique = true, nullable = false, name = "user_token")
-    @NonNull String token;
+    @Column(unique = true, nullable = false, name = "username")
+    @NonNull String username;
+    @Column(nullable = false, name = "userpassword")
+    @NonNull String userpassword;
+    @Column(unique = true, nullable = false, name = "usermail")
+    @NonNull String usermail;
+    @Column(unique = true, nullable = false, name = "usertoken")
+    @NonNull String usertoken;
 }
