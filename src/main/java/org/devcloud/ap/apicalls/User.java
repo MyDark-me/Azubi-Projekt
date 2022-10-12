@@ -194,15 +194,12 @@ public class User {
 
             session.beginTransaction();
             PgUser pgUser = new PgUser(query.get(EUser.USERNAME.toString()), query.get(EUser.PASSWORD.toString()), query.get(EUser.EMAIL.toString()), randomToken);
-            Long count = 1L;
-            try {
-                String queryString = "select count(*) from PgUser pguser where pguser.user_name=:name";
-                Query queryDatabase = session.createQuery(queryString, Integer.class);
-                queryDatabase.setParameter("name", pgUser.getName());
-                count = (Long) queryDatabase.uniqueResult();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+
+            String queryString = "select count(*) from PgUser pguser where pguser.username=:username";
+            Query queryDatabase = session.createQuery(queryString, Long.class);
+            queryDatabase.setParameter("username", pgUser.getUsername());
+            Long count = (Long) queryDatabase.uniqueResult();
+
             logger.debug("Es wurden {} user gefunden.", count);
 
             if(count > 0) {
@@ -218,7 +215,7 @@ public class User {
             session.persist(pgUser);
 
             session.getTransaction().commit();
-            logger.debug("ID {} wurde mit dem User {} erfolgreich erstellt.", pgUser.getId(), pgUser.getName());
+            logger.debug("ID {} wurde mit dem User {} erfolgreich erstellt.", pgUser.getUserid(), pgUser.getUsername());
             session.close();
 
 
@@ -292,13 +289,13 @@ public class User {
                 session.persist(pgUser);
 
                 session.getTransaction().commit();
-                logger.debug("ID {} wurde mit dem User {} erfolgreich abgefragt. Suche Name", pgUser.getId(), pgUser.getName());
+                logger.debug("ID {} wurde mit dem User {} erfolgreich abgefragt. Suche Name", pgUser.getUserid(), pgUser.getUsername());
                 session.close();
 
 
                 String response = getJSONCreator()
                         .addKeys("message", "name")
-                        .addValue(201, "User wurde Erfolgreich abgefragt!", pgUser.getName()).toString();
+                        .addValue(201, "User wurde Erfolgreich abgefragt!", pgUser.getUsername()).toString();
 
                 writeResponse(httpExchange, response, 201);
                 return;
@@ -312,13 +309,13 @@ public class User {
                 session.persist(pgUser);
 
                 session.getTransaction().commit();
-                logger.debug("ID {} wurde mit dem User {} erfolgreich abgefragt. Suche email", pgUser.getId(), pgUser.getName());
+                logger.debug("ID {} wurde mit dem User {} erfolgreich abgefragt. Suche email", pgUser.getUserid(), pgUser.getUsername());
                 session.close();
 
 
                 String response = getJSONCreator()
                         .addKeys("message", "email")
-                        .addValue(201, "User wurde Erfolgreich abgefragt!", pgUser.getName()).toString();
+                        .addValue(201, "User wurde Erfolgreich abgefragt!", pgUser.getUsername()).toString();
 
                 writeResponse(httpExchange, response, 201);
                 return;
