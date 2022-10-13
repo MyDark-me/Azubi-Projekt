@@ -101,6 +101,14 @@ public class Member {
         public String toString() {return name.toLowerCase(); }
     }
 
+    private enum ERole {
+        NAME("rolename");
+        final String name;
+        ERole(String name) { this.name = name; }
+        @Override
+        public String toString() {return name.toLowerCase(); }
+    }
+
     private enum EGroupPattern {
         /*
          * Name:
@@ -380,13 +388,170 @@ public class Member {
         public void handle(HttpExchange httpExchange) throws IOException {
             addResponseHeaders(httpExchange);
 
-            // user / group / token
+            if(!Azubiprojekt.getSqlPostgres().isConnection()) {
+                String response = getJSONCreator(500)
+                        .addKeys(error)
+                        .addValue("Datenbank ist nicht Erreichbar!").toString();
+
+                writeResponse(httpExchange, response, 500);
+                return;
+            }
+
             URI requestURI = httpExchange.getRequestURI();
             debugRequest(requestURI);
 
+            HashMap<String, String> query = getEntities(requestURI);
+            if(query.isEmpty()) {
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Es wurden keine Informationen mitgegeben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            if(!query.containsKey(EUser.USERNAME.toString()) || !query.containsKey(EUser.TOKEN.toString()) || !query.containsKey(EGroup.NAME.toString()) || !query.containsKey(ERole.NAME.toString())) {
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Es wurden nicht die richtigen Informationen mitgegeben.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            Session session = Azubiprojekt.getSqlPostgres().openSession();
+
+            logger.debug("Suche User mit dem Namen");
+            // hole user
+            String queryString = "FROM PgUser pguser WHERE pguser.username= :username";
+            Query queryDatabase = session.createQuery(queryString, PgUser.class);
+            queryDatabase.setParameter("username", query.get(EUser.USERNAME.toString()));
+            PgUser pgUser = (PgUser) queryDatabase.uniqueResult();
+
+            if(pgUser == null) {
+                session.close();
+                // user existiert nicht
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Der User existiert nicht.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            logger.debug("Suche User mit dem Token");
+            // hole user
+            queryString = "FROM PgUser pguser WHERE pguser.token= :token";
+            queryDatabase = session.createQuery(queryString, PgUser.class);
+            queryDatabase.setParameter("token", query.get(EUser.TOKEN.toString()));
+            PgUser pgUserToken = (PgUser) queryDatabase.uniqueResult();
+
+            if(pgUserToken == null) {
+                session.close();
+                // user existiert nicht
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Der User existiert nicht.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            logger.debug("Suche Gruppe mit dem Namen");
+            // hole gruppe
+            queryString = "FROM PgGroup pggroup WHERE pggroup.groupname= :groupname";
+            queryDatabase = session.createQuery(queryString, PgGroup.class);
+            queryDatabase.setParameter("groupname", query.get(EGroup.NAME.toString()));
+            PgGroup pgGroup = (PgGroup) queryDatabase.uniqueResult();
+
+            if(pgGroup == null) {
+                session.close();
+                // gruppe existiert nicht
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Die Gruppe existiert nicht.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            // prüfe ob pgUserToken rolle admin hat
+            queryString = "FROM PgMember pgmember WHERE pgmember.memberuser= :user AND pgmember.membergroup= :group";
+            queryDatabase = session.createQuery(queryString, PgMember.class);
+            queryDatabase.setParameter("user", pgUserToken);
+            queryDatabase.setParameter("group", pgGroup);
+            PgMember pgMemberToken = (PgMember) queryDatabase.uniqueResult();
+
+            if(pgMemberToken == null) {
+                session.close();
+                // user ist nicht in der gruppe
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Der User ist nicht in der Gruppe.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            if(pgMemberToken.getMemberrole().getRolename().equals("Admin")) {
+                session.close();
+                // user ist nicht in der gruppe
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Hat nicht die richtige Rolle.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            logger.debug("Suche Rolle mit dem Namen");
+            // hole rolle
+            queryString = "FROM PgRole pgrole WHERE pgrole.rolename= :rolename";
+            queryDatabase = session.createQuery(queryString, PgRole.class);
+            queryDatabase.setParameter("rolename", query.get(ERole.NAME.toString()));
+            PgRole pgRole = (PgRole) queryDatabase.uniqueResult();
+
+            if(pgRole == null) {
+                session.close();
+                // rolle existiert nicht
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Die Rolle existiert nicht.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            logger.debug("Suche Member mit dem User und der Gruppe");
+            // hole member
+            queryString = "FROM PgMember pgmember WHERE pgmember.memberuser= :user AND pgmember.membergroup= :group";
+            queryDatabase = session.createQuery(queryString, PgMember.class);
+            queryDatabase.setParameter("user", pgUser);
+            queryDatabase.setParameter("group", pgGroup);
+            PgMember pgMember = (PgMember) queryDatabase.uniqueResult();
+
+            if(pgMember == null) {
+                session.close();
+                // member existiert nicht
+                String response = getJSONCreator(400)
+                        .addKeys(error)
+                        .addValue("Der Member existiert nicht.").toString();
+
+                writeResponse(httpExchange, response, 400);
+                return;
+            }
+
+            logger.debug("Setze Rolle des Members");
+            pgMember.setMemberrole(pgRole);
+
+            logger.debug("Speichere Member");
+            session.save(pgMember);
+
+            session.close();
+
             String response = getJSONCreator(201)
-                    .addKeys("response")
-                    .addValue("User API is not implemented yet!").toString();
+                    .addKeys("success")
+                    .addValue("Du hast erfolgreich die Rolle geändert!").toString();
 
             writeResponse(httpExchange, response, 201);
         }
