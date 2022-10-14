@@ -5,6 +5,7 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import org.devcloud.ap.Azubiprojekt;
 import org.devcloud.ap.database.PgUser;
+import org.devcloud.ap.lang.ApiCallsLang;
 import org.devcloud.ap.utils.JSONCreator;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
@@ -19,6 +20,7 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
 public class User {
     private static final Logger logger = LoggerFactory.getLogger(User.class);
 
@@ -31,7 +33,7 @@ public class User {
 
     private User() {}
 
-    private final static String error = "error";
+    private static final String ERROR = "error";
 
     private static void addResponseHeaders(HttpExchange httpExchange) {
         httpExchange.getResponseHeaders().add("Content-Type", "application/json");
@@ -78,15 +80,6 @@ public class User {
         }
         return feedback;
     }
-
-    private enum EUser {
-        USERNAME("username"), PASSWORD("password"), EMAIL("email"), TOKEN("token");
-        final String name;
-        EUser(String name) { this.name = name; }
-        @Override
-        public String toString() {return name.toLowerCase(); }
-    }
-
 
     private enum EUserPattern {
         /*
@@ -135,8 +128,8 @@ public class User {
 
             if(!Azubiprojekt.getSqlPostgres().isConnection()) {
                 String response = getJSONCreator(500)
-                        .addKeys(error)
-                        .addValue("Datenbank ist nicht Erreichbar!").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.DATABASE_NOT_AVAILABLE).toString();
 
                 writeResponse(httpExchange, response, 500);
                 return;
@@ -150,43 +143,43 @@ public class User {
             HashMap<String, String> query = getEntities(requestURI);
             if(query.isEmpty()) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Es wurden keine Informationen mitgegeben.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.NO_INFORMATION).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
             }
 
-            if(!query.containsKey(EUser.USERNAME.toString()) || !query.containsKey(EUser.PASSWORD.toString()) || !query.containsKey(EUser.EMAIL.toString())) {
+            if(!query.containsKey(ApiCallsLang.USERNAME) || !query.containsKey(ApiCallsLang.PASSWORD) || !query.containsKey(ApiCallsLang.EMAIL)) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Es wurden nicht die richtigen Informationen mitgegeben.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.WRONG_INFORMATION).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
             }
 
-            if(EUserPattern.NAME.isMatch(query.get(EUser.USERNAME.toString()))) {
+            if(EUserPattern.NAME.isMatch(query.get(ApiCallsLang.USERNAME))) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Der Name entspricht nicht den Vorgaben.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.WRONG_NAME).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
             }
 
-            if(EUserPattern.PASSWORD.isMatch(query.get(EUser.PASSWORD.toString()))) {
+            if(EUserPattern.PASSWORD.isMatch(query.get(ApiCallsLang.PASSWORD))) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Das Passwort entspricht nicht den Vorgaben.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.WRONG_PASSWORD).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
             }
 
-            if(EUserPattern.EMAIL.isMatch(query.get(EUser.EMAIL.toString()))) {
+            if(EUserPattern.EMAIL.isMatch(query.get(ApiCallsLang.EMAIL))) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Die E-Mail entspricht nicht den Vorgaben.").toString();
 
                 writeResponse(httpExchange, response, 400);
@@ -202,16 +195,16 @@ public class User {
 
             String randomToken = createToken();
             PgUser pgUser = new PgUser(
-                    query.get(EUser.USERNAME.toString()),
-                    query.get(EUser.PASSWORD.toString()),
-                    query.get(EUser.EMAIL.toString()),
+                    query.get(ApiCallsLang.USERNAME),
+                    query.get(ApiCallsLang.PASSWORD),
+                    query.get(ApiCallsLang.EMAIL),
                     randomToken);
 
             // prüfe ob der user existiert
             String queryString = "SELECT COUNT(*) FROM PgUser pguser WHERE pguser.username= :username";
-            Query queryDatabase = session.createQuery(queryString, Long.class);
-            queryDatabase.setParameter("username", pgUser.getUsername());
-            Long count = (Long) queryDatabase.uniqueResult();
+            Query<Long> queryDatabase = session.createQuery(queryString, Long.class);
+            queryDatabase.setParameter(ApiCallsLang.USERNAME, pgUser.getUsername());
+            Long count = queryDatabase.uniqueResult();
 
             logger.debug("Es wurden {} user gefunden.", count);
 
@@ -220,7 +213,7 @@ public class User {
                 session.close();
 
                 String response = getJSONCreator(400)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Der Username wurde schon vergeben.").toString();
 
                 writeResponse(httpExchange, response, 400);
@@ -236,8 +229,8 @@ public class User {
 
 
             String response = getJSONCreator(201)
-                    .addKeys("success", "name", "email", "token")
-                    .addValue( "User wurde Erfolgreich erstellt!", query.get(EUser.USERNAME.toString()), query.get(EUser.EMAIL.toString()), randomToken ).toString();
+                    .addKeys(ApiCallsLang.SUCCESS, "name", ApiCallsLang.EMAIL, ApiCallsLang.TOKEN)
+                    .addValue( "User wurde Erfolgreich erstellt!", query.get(ApiCallsLang.USERNAME), query.get(ApiCallsLang.EMAIL), randomToken ).toString();
 
             writeResponse(httpExchange, response, 200);
         }
@@ -250,8 +243,8 @@ public class User {
 
             if(!Azubiprojekt.getSqlPostgres().isConnection()) {
                 String response = getJSONCreator(500)
-                        .addKeys(error)
-                        .addValue("Datenbank ist nicht Erreichbar!").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.DATABASE_NOT_AVAILABLE).toString();
 
                 writeResponse(httpExchange, response, 500);
                 return;
@@ -263,17 +256,17 @@ public class User {
             HashMap<String, String> query = getEntities(requestURI);
             if(query.isEmpty()) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Es wurden keine Informationen mitgegeben.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.NO_INFORMATION).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
             }
 
-            if(!query.containsKey(EUser.TOKEN.toString())) {
+            if(!query.containsKey(ApiCallsLang.TOKEN)) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Es wurden nicht die richtigen Informationen mitgegeben.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.WRONG_INFORMATION).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
@@ -286,15 +279,15 @@ public class User {
 
             // hole user informationen
             String queryString = "FROM PgUser pguser WHERE pguser.usertoken= :usertoken";
-            Query queryDatabase = session.createQuery(queryString, PgUser.class);
-            queryDatabase.setParameter("usertoken", query.get(EUser.TOKEN.toString()));
-            PgUser pgUser = (PgUser) queryDatabase.uniqueResult();
+            Query<PgUser> queryDatabase = session.createQuery(queryString, PgUser.class);
+            queryDatabase.setParameter("usertoken", query.get(ApiCallsLang.TOKEN));
+            PgUser pgUser = queryDatabase.uniqueResult();
 
             if(pgUser == null) {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Der Token ist nicht gültig.").toString();
 
                 writeResponse(httpExchange, response, 400);
@@ -305,10 +298,10 @@ public class User {
             session.getTransaction().commit();
             session.close();
 
-            logger.debug("Der benutzer dem den token {} gehört hatte wurde gelöscht.", query.get(EUser.TOKEN.toString()));
+            logger.debug("Der benutzer dem den token {} gehört hatte wurde gelöscht.", query.get(ApiCallsLang.TOKEN));
 
             String response = getJSONCreator(201)
-                    .addKeys("success")
+                    .addKeys(ApiCallsLang.SUCCESS)
                     .addValue( "User wurde erfolgreich gelöscht!").toString();
 
 
@@ -323,8 +316,8 @@ public class User {
 
             if(!Azubiprojekt.getSqlPostgres().isConnection()) {
                 String response = getJSONCreator(500)
-                        .addKeys(error)
-                        .addValue("Datenbank ist nicht Erreichbar!").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.DATABASE_NOT_AVAILABLE).toString();
 
                 writeResponse(httpExchange, response, 500);
                 return;
@@ -338,43 +331,43 @@ public class User {
             HashMap<String, String> query = getEntities(requestURI);
             if(query.isEmpty()) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Es wurden keine Informationen mitgegeben.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.NO_INFORMATION).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
             }
 
-            if(!query.containsKey(EUser.USERNAME.toString()) || !query.containsKey(EUser.PASSWORD.toString()) || !query.containsKey(EUser.EMAIL.toString())) {
+            if(!query.containsKey(ApiCallsLang.USERNAME) || !query.containsKey(ApiCallsLang.PASSWORD) || !query.containsKey(ApiCallsLang.EMAIL)) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Es wurden nicht die richtigen Informationen mitgegeben.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.WRONG_INFORMATION).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
             }
 
-            if(EUserPattern.NAME.isMatch(query.get(EUser.USERNAME.toString()))) {
+            if(EUserPattern.NAME.isMatch(query.get(ApiCallsLang.USERNAME))) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Der Name entspricht nicht den Vorgaben.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.WRONG_NAME).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
             }
 
-            if(EUserPattern.PASSWORD.isMatch(query.get(EUser.PASSWORD.toString()))) {
+            if(EUserPattern.PASSWORD.isMatch(query.get(ApiCallsLang.PASSWORD))) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Das Passwort entspricht nicht den Vorgaben.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.WRONG_PASSWORD).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
             }
 
-            if(EUserPattern.EMAIL.isMatch(query.get(EUser.EMAIL.toString()))) {
+            if(EUserPattern.EMAIL.isMatch(query.get(ApiCallsLang.EMAIL))) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Die E-Mail entspricht nicht den Vorgaben.").toString();
 
                 writeResponse(httpExchange, response, 400);
@@ -388,15 +381,15 @@ public class User {
 
             // hole mir die user informationen
             String queryString = "FROM PgUser pguser WHERE pguser.username= :username";
-            Query queryDatabase = session.createQuery(queryString, PgUser.class);
-            queryDatabase.setParameter("username", query.get(EUser.USERNAME.toString()));
-            PgUser pgUser = (PgUser) queryDatabase.uniqueResult();
+            Query<PgUser> queryDatabase = session.createQuery(queryString, PgUser.class);
+            queryDatabase.setParameter(ApiCallsLang.USERNAME, query.get(ApiCallsLang.USERNAME));
+            PgUser pgUser = queryDatabase.uniqueResult();
 
             if(pgUser == null) {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Der Username existiert nicht.").toString();
 
                 writeResponse(httpExchange, response, 400);
@@ -406,12 +399,12 @@ public class User {
             logger.debug("Es wurden der User {} gefunden.", pgUser.getUsername());
 
             // Passwort prüfen
-            if(!query.get(EUser.PASSWORD.toString()).equals(pgUser.getUserpassword())) {
+            if(!query.get(ApiCallsLang.PASSWORD).equals(pgUser.getUserpassword())) {
                 session.close();
                 // passwort falsch
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Der Username oder das Passwort ist falsch.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.WRONG_LOGIN).toString();
 
                 writeResponse(httpExchange, response, 400);
             }
@@ -420,8 +413,8 @@ public class User {
             String randomToken = createToken();
             pgUser.setUsertoken(randomToken);
 
-            pgUser.setUsermail(query.get(EUser.EMAIL.toString()));
-            pgUser.setUserpassword(query.get(EUser.PASSWORD.toString()));
+            pgUser.setUsermail(query.get(ApiCallsLang.EMAIL));
+            pgUser.setUserpassword(query.get(ApiCallsLang.PASSWORD));
 
             session.merge(pgUser);
             session.getTransaction().commit();
@@ -431,8 +424,8 @@ public class User {
 
 
             String response = getJSONCreator(201)
-                    .addKeys("success", "name", "email", "token")
-                    .addValue( "User hat sich Erfolgreich bearbeitet!", query.get(EUser.USERNAME.toString()), query.get(EUser.EMAIL.toString()), randomToken ).toString();
+                    .addKeys(ApiCallsLang.SUCCESS, "name", ApiCallsLang.EMAIL, ApiCallsLang.TOKEN)
+                    .addValue( "User hat sich Erfolgreich bearbeitet!", query.get(ApiCallsLang.USERNAME), query.get(ApiCallsLang.EMAIL), randomToken ).toString();
 
             writeResponse(httpExchange, response, 200);
         }
@@ -445,8 +438,8 @@ public class User {
 
             if(!Azubiprojekt.getSqlPostgres().isConnection()) {
                 String response = getJSONCreator(500)
-                        .addKeys(error)
-                        .addValue("Datenbank ist nicht Erreichbar!").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.DATABASE_NOT_AVAILABLE).toString();
 
                 writeResponse(httpExchange, response, 500);
                 return;
@@ -460,35 +453,35 @@ public class User {
             HashMap<String, String> query = getEntities(requestURI);
             if(query.isEmpty()) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Es wurden keine Informationen mitgegeben.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.NO_INFORMATION).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
             }
 
-            if(!query.containsKey(EUser.USERNAME.toString()) || !query.containsKey(EUser.PASSWORD.toString())) {
+            if(!query.containsKey(ApiCallsLang.USERNAME) || !query.containsKey(ApiCallsLang.PASSWORD)) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Es wurden nicht die richtigen Informationen mitgegeben.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.WRONG_INFORMATION).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
             }
 
-            if(EUserPattern.NAME.isMatch(query.get(EUser.USERNAME.toString()))) {
+            if(EUserPattern.NAME.isMatch(query.get(ApiCallsLang.USERNAME))) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Der Name entspricht nicht den Vorgaben.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.WRONG_NAME).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
             }
 
-            if(EUserPattern.PASSWORD.isMatch(query.get(EUser.PASSWORD.toString()))) {
+            if(EUserPattern.PASSWORD.isMatch(query.get(ApiCallsLang.PASSWORD))) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Das Passwort entspricht nicht den Vorgaben.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.WRONG_PASSWORD).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
@@ -501,16 +494,16 @@ public class User {
 
             // hole mir die user informationen
             String queryString = "FROM PgUser pguser WHERE pguser.username= :username";
-            Query queryDatabase = session.createQuery(queryString, PgUser.class);
-            queryDatabase.setParameter("username", query.get(EUser.USERNAME.toString()));
-            PgUser pgUser = (PgUser) queryDatabase.uniqueResult();
+            Query<PgUser> queryDatabase = session.createQuery(queryString, PgUser.class);
+            queryDatabase.setParameter(ApiCallsLang.USERNAME, query.get(ApiCallsLang.USERNAME));
+            PgUser pgUser = queryDatabase.uniqueResult();
 
             if(pgUser == null) {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Der Username oder das Passwort ist falsch.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.WRONG_LOGIN).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
@@ -519,12 +512,12 @@ public class User {
             logger.debug("Es wurden der User {} gefunden.", pgUser.getUsername());
 
             // Passwort prüfen
-            if(!query.get(EUser.PASSWORD.toString()).equals(pgUser.getUserpassword())) {
+            if(!query.get(ApiCallsLang.PASSWORD).equals(pgUser.getUserpassword())) {
                 session.close();
                 // passwort falsch
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Der Username oder das Passwort ist falsch.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.WRONG_LOGIN).toString();
 
                 writeResponse(httpExchange, response, 400);
             }
@@ -542,8 +535,8 @@ public class User {
 
 
             String response = getJSONCreator(201)
-                    .addKeys("success", "name", "email", "token")
-                    .addValue( "User hat sich Erfolgreich eingeloggt!", query.get(EUser.USERNAME.toString()), query.get(EUser.EMAIL.toString()), randomToken ).toString();
+                    .addKeys(ApiCallsLang.SUCCESS, "name", ApiCallsLang.EMAIL, ApiCallsLang.TOKEN)
+                    .addValue( "User hat sich Erfolgreich eingeloggt!", query.get(ApiCallsLang.USERNAME), query.get(ApiCallsLang.EMAIL), randomToken ).toString();
 
             writeResponse(httpExchange, response, 200);
         }
