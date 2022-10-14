@@ -9,10 +9,10 @@ import org.devcloud.ap.database.PgGroup;
 import org.devcloud.ap.database.PgMember;
 import org.devcloud.ap.database.PgRole;
 import org.devcloud.ap.database.PgUser;
+import org.devcloud.ap.lang.ApiCallsLang;
 import org.devcloud.ap.utils.JSONCreator;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +37,7 @@ public class Member {
 
     private Member() {}
 
-    private final static String error = "error";
+    private static final String ERROR = "error";
 
     private static void addResponseHeaders(HttpExchange httpExchange) {
         httpExchange.getResponseHeaders().add("Content-Type", "application/json");
@@ -94,7 +94,7 @@ public class Member {
     }
 
     private enum EUser {
-        USERNAME("username"), PASSWORD("password"), EMAIL("email"), TOKEN("token");
+        USERNAME(ApiCallsLang.USERNAME), PASSWORD("password"), EMAIL("email"), TOKEN("token");
         final String name;
         EUser(String name) { this.name = name; }
         @Override
@@ -102,7 +102,7 @@ public class Member {
     }
 
     private enum ERole {
-        NAME("rolename");
+        NAME(ApiCallsLang.ROLENAME);
         final String name;
         ERole(String name) { this.name = name; }
         @Override
@@ -138,8 +138,8 @@ public class Member {
 
             if(!Azubiprojekt.getSqlPostgres().isConnection()) {
                 String response = getJSONCreator(500)
-                        .addKeys(error)
-                        .addValue("Datenbank ist nicht Erreichbar!").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.DATABASE_NOT_AVAILABLE).toString();
 
                 writeResponse(httpExchange, response, 500);
                 return;
@@ -153,7 +153,7 @@ public class Member {
             HashMap<String, String> query = getEntities(requestURI);
             if(query.isEmpty()) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Es wurden keine Informationen mitgegeben.").toString();
 
                 writeResponse(httpExchange, response, 400);
@@ -162,8 +162,8 @@ public class Member {
 
             if(!query.containsKey(EUser.USERNAME.toString()) ||!query.containsKey(EGroup.NAME.toString()) || !query.containsKey(EUser.TOKEN.toString())) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Es wurden nicht die richtigen Informationen mitgegeben.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.WRONG_INFORMATION).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
@@ -171,7 +171,7 @@ public class Member {
 
             if(EGroupPattern.NAME.isMatch(query.get(EGroup.NAME.toString()))) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Der Name entspricht nicht den Vorgaben.").toString();
 
                 writeResponse(httpExchange, response, 400);
@@ -194,7 +194,7 @@ public class Member {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Die Gruppe existiert nicht.").toString();
 
                 writeResponse(httpExchange, response, 400);
@@ -212,7 +212,7 @@ public class Member {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Der Token ist nicht gültig.").toString();
 
                 writeResponse(httpExchange, response, 400);
@@ -224,14 +224,14 @@ public class Member {
             queryString = "FROM PgMeber pgmember WHERE pgmember.memberuser= :user AND pgmember.membergroup= :group";
             queryDatabase = session.createQuery(queryString, PgMember.class);
             queryDatabase.setParameter("user", pgUser);
-            queryDatabase.setParameter("group", pgGroup);
+            queryDatabase.setParameter(ApiCallsLang.GROUP, pgGroup);
             PgMember pgMember = (PgMember) queryDatabase.uniqueResult();
 
             if(pgMember == null) {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Du bist nicht Admin.").toString();
 
                 writeResponse(httpExchange, response, 400);
@@ -242,14 +242,14 @@ public class Member {
             // hole role
             queryString = "FROM PgRole pgrole WHERE pgrole.rolename= :rolename";
             queryDatabase = session.createQuery(queryString, PgRole.class);
-            queryDatabase.setParameter("rolename", "Member");
+            queryDatabase.setParameter(ApiCallsLang.ROLENAME, "Member");
             PgRole pgRole = (PgRole) queryDatabase.uniqueResult();
 
             if(pgRole == null) {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Die Rolle Admin existiert nicht.").toString();
 
                 writeResponse(httpExchange, response, 400);
@@ -259,15 +259,15 @@ public class Member {
             // add user
             queryString = "FROM PgUser pguser WHERE pguser.username= :username";
             queryDatabase = session.createQuery(queryString, PgUser.class);
-            queryDatabase.setParameter("username", query.get(EUser.USERNAME.toString()));
+            queryDatabase.setParameter(ApiCallsLang.USERNAME, query.get(EUser.USERNAME.toString()));
             PgUser pgUserAdd = (PgUser) queryDatabase.uniqueResult();
 
             if(pgUserAdd == null) {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Der User existiert nicht.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.NO_USER).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
@@ -315,8 +315,8 @@ public class Member {
 
             if(!Azubiprojekt.getSqlPostgres().isConnection()) {
                 String response = getJSONCreator(500)
-                        .addKeys(error)
-                        .addValue("Datenbank ist nicht Erreichbar!").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.DATABASE_NOT_AVAILABLE).toString();
 
                 writeResponse(httpExchange, response, 500);
                 return;
@@ -328,7 +328,7 @@ public class Member {
             HashMap<String, String> query = getEntities(requestURI);
             if(query.isEmpty()) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Es wurden keine Informationen mitgegeben.").toString();
 
                 writeResponse(httpExchange, response, 400);
@@ -337,28 +337,36 @@ public class Member {
 
             if(!query.containsKey(EUser.USERNAME.toString())) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Es wurden nicht die richtigen Informationen mitgegeben.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.WRONG_INFORMATION).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
             }
 
-            Session session = Azubiprojekt.getSqlPostgres().openSession();
+            Session session = null;
+            try{
+                session = Azubiprojekt.getSqlPostgres().openSession();
+            }catch (Exception ex){
+                logger.error(ex.getMessage());
+            }finally {
+                assert session != null;
+                Azubiprojekt.getSqlPostgres().closeSession(session);
+            }
 
             logger.debug("Suche User mit dem Namen");
             // hole user
             String queryString = "FROM PgUser pguser WHERE pguser.username= :username";
             Query queryDatabase = session.createQuery(queryString, PgUser.class);
-            queryDatabase.setParameter("username", query.get(EUser.USERNAME.toString()));
+            queryDatabase.setParameter(ApiCallsLang.USERNAME, query.get(EUser.USERNAME.toString()));
             PgUser pgUser = (PgUser) queryDatabase.uniqueResult();
 
             if(pgUser == null) {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Der User existiert nicht.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.NO_USER).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
@@ -390,8 +398,8 @@ public class Member {
 
             if(!Azubiprojekt.getSqlPostgres().isConnection()) {
                 String response = getJSONCreator(500)
-                        .addKeys(error)
-                        .addValue("Datenbank ist nicht Erreichbar!").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.DATABASE_NOT_AVAILABLE).toString();
 
                 writeResponse(httpExchange, response, 500);
                 return;
@@ -403,7 +411,7 @@ public class Member {
             HashMap<String, String> query = getEntities(requestURI);
             if(query.isEmpty()) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Es wurden keine Informationen mitgegeben.").toString();
 
                 writeResponse(httpExchange, response, 400);
@@ -412,8 +420,8 @@ public class Member {
 
             if(!query.containsKey(EUser.USERNAME.toString()) || !query.containsKey(EUser.TOKEN.toString()) || !query.containsKey(EGroup.NAME.toString()) || !query.containsKey(ERole.NAME.toString())) {
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Es wurden nicht die richtigen Informationen mitgegeben.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.WRONG_INFORMATION).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
@@ -425,15 +433,15 @@ public class Member {
             // hole user
             String queryString = "FROM PgUser pguser WHERE pguser.username= :username";
             Query queryDatabase = session.createQuery(queryString, PgUser.class);
-            queryDatabase.setParameter("username", query.get(EUser.USERNAME.toString()));
+            queryDatabase.setParameter(ApiCallsLang.USERNAME, query.get(EUser.USERNAME.toString()));
             PgUser pgUser = (PgUser) queryDatabase.uniqueResult();
 
             if(pgUser == null) {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Der User existiert nicht.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.NO_USER).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
@@ -450,8 +458,8 @@ public class Member {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
-                        .addKeys(error)
-                        .addValue("Der User existiert nicht.").toString();
+                        .addKeys(ERROR)
+                        .addValue(ApiCallsLang.NO_USER).toString();
 
                 writeResponse(httpExchange, response, 400);
                 return;
@@ -468,7 +476,7 @@ public class Member {
                 session.close();
                 // gruppe existiert nicht
                 String response = getJSONCreator(400)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Die Gruppe existiert nicht.").toString();
 
                 writeResponse(httpExchange, response, 400);
@@ -479,14 +487,14 @@ public class Member {
             queryString = "FROM PgMember pgmember WHERE pgmember.memberuser= :user AND pgmember.membergroup= :group";
             queryDatabase = session.createQuery(queryString, PgMember.class);
             queryDatabase.setParameter("user", pgUserToken);
-            queryDatabase.setParameter("group", pgGroup);
+            queryDatabase.setParameter(ApiCallsLang.GROUP, pgGroup);
             PgMember pgMemberToken = (PgMember) queryDatabase.uniqueResult();
 
             if(pgMemberToken == null) {
                 session.close();
                 // user ist nicht in der gruppe
                 String response = getJSONCreator(400)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Der User ist nicht in der Gruppe.").toString();
 
                 writeResponse(httpExchange, response, 400);
@@ -497,7 +505,7 @@ public class Member {
                 session.close();
                 // user ist nicht in der gruppe
                 String response = getJSONCreator(400)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Hat nicht die richtige Rolle.").toString();
 
                 writeResponse(httpExchange, response, 400);
@@ -508,14 +516,14 @@ public class Member {
             // hole rolle
             queryString = "FROM PgRole pgrole WHERE pgrole.rolename= :rolename";
             queryDatabase = session.createQuery(queryString, PgRole.class);
-            queryDatabase.setParameter("rolename", query.get(ERole.NAME.toString()));
+            queryDatabase.setParameter(ApiCallsLang.ROLENAME, query.get(ERole.NAME.toString()));
             PgRole pgRole = (PgRole) queryDatabase.uniqueResult();
 
             if(pgRole == null) {
                 session.close();
                 // rolle existiert nicht
                 String response = getJSONCreator(400)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Die Rolle existiert nicht.").toString();
 
                 writeResponse(httpExchange, response, 400);
@@ -527,14 +535,14 @@ public class Member {
             queryString = "FROM PgMember pgmember WHERE pgmember.memberuser= :user AND pgmember.membergroup= :group";
             queryDatabase = session.createQuery(queryString, PgMember.class);
             queryDatabase.setParameter("user", pgUser);
-            queryDatabase.setParameter("group", pgGroup);
+            queryDatabase.setParameter(ApiCallsLang.GROUP, pgGroup);
             PgMember pgMember = (PgMember) queryDatabase.uniqueResult();
 
             if(pgMember == null) {
                 session.close();
                 // member existiert nicht
                 String response = getJSONCreator(400)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Der Member existiert nicht.").toString();
 
                 writeResponse(httpExchange, response, 400);
@@ -545,7 +553,7 @@ public class Member {
             pgMember.setMemberrole(pgRole);
 
             logger.debug("Speichere Member");
-            session.save(pgMember);
+            session.persist(pgMember);
 
             session.close();
 
