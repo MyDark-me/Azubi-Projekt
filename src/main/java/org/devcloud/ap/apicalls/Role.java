@@ -9,7 +9,6 @@ import org.devcloud.ap.database.PgRole;
 import org.devcloud.ap.utils.JSONCreator;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,38 +27,39 @@ public class Role {
 
     private Role() {}
 
-    private final static String error = "error";
-
-    private static void addResponseHeaders(HttpExchange httpExchange) {
-        httpExchange.getResponseHeaders().add("Content-Type", "application/json");
-        httpExchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-    }
-
-    private static void writeResponse(HttpExchange httpExchange, String response, int statusCode) throws IOException {
-        httpExchange.sendResponseHeaders(statusCode, response.length());
-
-        OutputStream outputStream = httpExchange.getResponseBody();
-        for(char write : response.toCharArray())
-            outputStream.write(write);
-        outputStream.close();
-    }
-
-    private static JSONCreator getJSONCreator(int statusCode) {
-        return new JSONCreator().addKeys("statuscode").addValue(statusCode);
-    }
-
-    private static void debugRequest(URI requestURI) {
-        logger.debug("{} - was requested", requestURI);
-    }
+    private static final  String ERROR = "error";
 
     private static class Roles implements HttpHandler {
+
+        private static void addResponseHeaders(HttpExchange httpExchange) {
+            httpExchange.getResponseHeaders().add("Content-Type", "application/json");
+            httpExchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        }
+
+        private static void writeResponse(HttpExchange httpExchange, String response, int statusCode) throws IOException {
+            httpExchange.sendResponseHeaders(statusCode, response.length());
+
+            OutputStream outputStream = httpExchange.getResponseBody();
+            for(char write : response.toCharArray())
+                outputStream.write(write);
+            outputStream.close();
+        }
+
+        private static JSONCreator getJSONCreator(int statusCode) {
+            return new JSONCreator().addKeys("statuscode").addValue(statusCode);
+        }
+
+        private static void debugRequest(URI requestURI) {
+            logger.debug("{} - was requested", requestURI);
+        }
+
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
             addResponseHeaders(httpExchange);
 
             if(!Azubiprojekt.getSqlPostgres().isConnection()) {
                 String response = getJSONCreator(500)
-                        .addKeys(error)
+                        .addKeys(ERROR)
                         .addValue("Datenbank ist nicht Erreichbar!").toString();
 
                 writeResponse(httpExchange, response, 500);
@@ -69,9 +69,16 @@ public class Role {
             URI requestURI = httpExchange.getRequestURI();
             debugRequest(requestURI);
 
-            Session session = Azubiprojekt.getSqlPostgres().openSession();
-
-            Query query = session.createQuery("FROM PgRole", PgRole.class);
+            Session session = null;
+            try {
+                session = Azubiprojekt.getSqlPostgres().openSession();
+            }catch (Exception ex){
+                logger.error(ex.getMessage());
+            }finally {
+                assert session != null;
+                Azubiprojekt.getSqlPostgres().closeSession(session);
+            }
+            Query<PgRole> query = session.createQuery("FROM PgRole", PgRole.class);
             List<PgRole> pgRoles = query.list();
             logger.debug("Lese Role records...");
 
