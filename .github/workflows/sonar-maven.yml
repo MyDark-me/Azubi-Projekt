@@ -1,8 +1,5 @@
 name: Build for Sonar
-on:
-  push:
-    branches:
-      - main # or the name of your main branch
+on: push
 
 jobs:
   build:
