@@ -14,6 +14,12 @@ public class JSONCreator {
         this.valueArray = new ArrayList<>();
     }
 
+    public JSONCreator put(String key, Object value) {
+        this.keyArray.add(key);
+        this.valueArray.add(value);
+        return this;
+    }
+
     public JSONCreator addKeys(String ... keys) {
         this.keyArray.addAll(Arrays.asList(keys));
         return this;
