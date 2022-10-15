@@ -1,4 +1,4 @@
-package org.devcloud.ap.apicalls.helper;
+package org.devcloud.ap.utils.helper;
 
 public interface ResponseMessage {
     int getRCode();
