@@ -150,9 +150,9 @@ public class User {
                 session.close();
 
                 JSONCreator jsonCreator = new JSONCreator();
-                jsonCreator.put(EUser.NAME.toString(), query.get(EUser.NAME.toString()));
-                jsonCreator.put(EUser.EMAIL.toString(), query.get(EUser.EMAIL.toString()));
-                jsonCreator.put(EUser.TOKEN.toString(), query.get(EUser.TOKEN.toString()));
+                jsonCreator.put(EUser.NAME.toString(), apUser.getName());
+                jsonCreator.put(EUser.EMAIL.toString(), apUser.getEmail());
+                jsonCreator.put(EUser.TOKEN.toString(), apUser.getToken());
 
                 response.writeResponse(jsonCreator);
 
@@ -165,7 +165,7 @@ public class User {
 
     private static class Delete implements HttpHandler {
         @Override
-        public void handle(HttpExchange httpExchange) throws IOException {
+        public void handle(HttpExchange httpExchange) {
             addResponseHeaders(httpExchange);
 
             if(!Azubiprojekt.getSqlPostgres().isConnection()) {
@@ -238,7 +238,7 @@ public class User {
 
     private static class Edit implements HttpHandler {
         @Override
-        public void handle(HttpExchange httpExchange) throws IOException {
+        public void handle(HttpExchange httpExchange) {
             addResponseHeaders(httpExchange);
 
             if(!Azubiprojekt.getSqlPostgres().isConnection()) {
@@ -397,63 +397,46 @@ public class User {
             try {
                 Session session = Azubiprojekt.getSqlPostgres().openSession();
                 Query<APUser> queryUser = session.createNamedQuery("@HQL_GET_SEARCH_USER_NAME", APUser.class);
+                queryUser.setParameter("name", query.get(EUser.NAME.toString()));
+
+                if(queryUser.list().isEmpty()) {
+                    session.close();
+                    response.writeResponse(EMessages.WRONG_LOGIN);
+                    return;
+                }
+
+                APUser apUser = queryUser.uniqueResult();
+                logger.debug("Es wurde der User {} gefunden.", apUser.getName());
+
+                // Passwort prüfen
+                if(!query.get(EUser.PASSWORD.toString()).equals(apUser.getPassword())) {
+                    session.close();
+                    response.writeResponse(EMessages.WRONG_LOGIN);
+                }
+
+                // new random token
+                String randomToken = createToken();
+                apUser.setToken(randomToken);
+
+                session.beginTransaction();
+
+                session.merge(apUser);
+
+                session.getTransaction().commit();
+                session.close();
+
+                JSONCreator jsonCreator = new JSONCreator();
+                jsonCreator.put(EUser.NAME.toString(), apUser.getName());
+                jsonCreator.put(EUser.EMAIL.toString(), apUser.getEmail());
+                jsonCreator.put(EUser.TOKEN.toString(), apUser.getToken());
+
+                response.writeResponse(jsonCreator);
+
             } catch (HibernateException e) {
                 e.printStackTrace();
                 logger.error("Es konnte keine Verbindung zur Datenbank hergestellt werden.");
                 response.writeResponse(EMessages.DATABASE_NOT_AVAILABLE);
-                return;
             }
-
-            Session session = Azubiprojekt.getSqlPostgres().openSession();
-            session.beginTransaction();
-
-            // hole mir die user informationen
-            String queryString = "FROM PgUser pguser WHERE pguser.username= :username";
-            Query<APUser> queryDatabase = session.createQuery(queryString, APUser.class);
-            queryDatabase.setParameter(ApiCallsLang.USERNAME, query.get(ApiCallsLang.USERNAME));
-            APUser APUser = queryDatabase.uniqueResult();
-
-            if(APUser == null) {
-                session.close();
-                // user existiert nicht
-                String response = getJSONCreator(400)
-                        .addKeys(ERROR)
-                        .addValue(ApiCallsLang.WRONG_LOGIN).toString();
-
-                writeResponse(httpExchange, response, 400);
-                return;
-            }
-
-            logger.debug("Es wurden der User {} gefunden.", APUser.getUsername());
-
-            // Passwort prüfen
-            if(!query.get(ApiCallsLang.PASSWORD).equals(APUser.getUserpassword())) {
-                session.close();
-                // passwort falsch
-                String response = getJSONCreator(400)
-                        .addKeys(ERROR)
-                        .addValue(ApiCallsLang.WRONG_LOGIN).toString();
-
-                writeResponse(httpExchange, response, 400);
-            }
-
-            // new random token
-            String randomToken = createToken();
-            APUser.setUsertoken(randomToken);
-
-            session.merge(APUser);
-
-            session.getTransaction().commit();
-            session.close();
-
-            logger.debug("ID {} wurde mit dem User {} ein neuer Token gesetzt.", APUser.getUserid(), APUser.getUsername());
-
-
-            String response = getJSONCreator(201)
-                    .addKeys(ApiCallsLang.SUCCESS, "name", ApiCallsLang.EMAIL, ApiCallsLang.TOKEN)
-                    .addValue( "User hat sich Erfolgreich eingeloggt!", query.get(ApiCallsLang.USERNAME), query.get(ApiCallsLang.EMAIL), randomToken ).toString();
-
-            writeResponse(httpExchange, response, 200);
         }
     }
 }

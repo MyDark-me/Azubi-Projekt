@@ -5,7 +5,6 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import org.devcloud.ap.Azubiprojekt;
-import org.devcloud.ap.database.PgGroup;
 import org.devcloud.ap.database.APMember;
 import org.devcloud.ap.database.APRole;
 import org.devcloud.ap.database.APUser;

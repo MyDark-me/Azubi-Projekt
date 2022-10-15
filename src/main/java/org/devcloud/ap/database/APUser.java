@@ -31,7 +31,7 @@ public class APUser implements Serializable {
     @NonNull String password;
 
     @Column(unique = true, nullable = false)
-    @NonNull String mail;
+    @NonNull String email;
 
     @Column(unique = true, nullable = false)
     @NonNull String token;
