@@ -1,5 +1,6 @@
 package org.devcloud.ap.utils;
 
+import io.sentry.Sentry;
 import lombok.Getter;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -33,7 +34,7 @@ public class SQLPostgres {
             logger.info("SQL: SessionFactory wurde Erstellt");
         } catch (Exception e) {
             logger.error("SQL: SessionFactory konnte nicht erstellt werden. Error: ");
-            e.printStackTrace();
+            Sentry.captureException(e);
         }
     }
 

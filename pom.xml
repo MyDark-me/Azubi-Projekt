@@ -76,5 +76,16 @@
             <version>1.18.24</version>
             <scope>provided</scope>
         </dependency>
+        <!-- SentryIO - ErrorLogging / Management for Exceptions -->
+        <dependency>
+            <groupId>io.sentry</groupId>
+            <artifactId>sentry</artifactId>
+            <version>6.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.shulie</groupId>
+            <artifactId>oshi-core</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 </project>
