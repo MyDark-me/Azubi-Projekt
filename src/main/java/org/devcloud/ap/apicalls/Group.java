@@ -86,7 +86,7 @@ public class Group {
                 return;
             }
 
-            if(!EPattern.NROMAL.isMatch(query.get(EGroup.NAME.toString()))) {
+            if(!EPattern.USERNAME.isMatch(query.get(EGroup.NAME.toString()))) {
                 response.writeResponse(EMessages.WRONG_NAME);
                 return;
             }
@@ -156,7 +156,6 @@ public class Group {
             }
         }
     }
-    /*
 
     private static class Delete implements HttpHandler {
         @Override
@@ -385,5 +384,4 @@ public class Group {
             writeResponse(httpExchange, response, 201);
         }
     }
-    */
 }

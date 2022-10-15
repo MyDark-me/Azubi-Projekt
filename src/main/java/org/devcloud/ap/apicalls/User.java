@@ -1,12 +1,10 @@
 package org.devcloud.ap.apicalls;
 
-import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import org.devcloud.ap.Azubiprojekt;
 import org.devcloud.ap.database.APUser;
-import org.devcloud.ap.database.enumeration.EGroup;
 import org.devcloud.ap.database.enumeration.EUser;
 import org.devcloud.ap.database.enumeration.pattern.EPattern;
 import org.devcloud.ap.lang.ApiCallsLang;
@@ -43,6 +41,7 @@ public class User {
         WRONG_PASSWORD(400, "Das Passwort entspricht nicht den Vorgaben."),
         WRONG_EMAIL(400, "Die E-Mail entspricht nicht den Vorgaben."),
         ALREADY_NAME_USE(400, "Der Name wurde schon vergeben."),
+        WRONG_LOGIN(400,"Der Username oder das Passwort ist falsch."),
         INTERNAL_SERVER_ERROR(500, "Internal Server Error");
 
         private final int rCode;
@@ -101,7 +100,8 @@ public class User {
                 response.writeResponse(EMessages.WRONG_INFORMATION);
                 return;
             }
-            if(!EPattern.NROMAL.isMatch(query.get(EUser.NAME.toString()))) {
+
+            if(!EPattern.USERNAME.isMatch(query.get(EUser.NAME.toString()))) {
                 response.writeResponse(EMessages.WRONG_NAME);
                 return;
             }
@@ -361,60 +361,48 @@ public class User {
     private static class Login implements HttpHandler {
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
-            addResponseHeaders(httpExchange);
+            Response response = new Response(logger, httpExchange);
+            response.addResponseHeaders().debugRequest();
 
             if(!Azubiprojekt.getSqlPostgres().isConnection()) {
-                String response = getJSONCreator(500)
-                        .addKeys(ERROR)
-                        .addValue(ApiCallsLang.DATABASE_NOT_AVAILABLE).toString();
-
-                writeResponse(httpExchange, response, 500);
+                response.writeResponse(EMessages.DATABASE_NOT_AVAILABLE);
                 return;
             }
 
-            URI requestURI = httpExchange.getRequestURI();
-            debugRequest(requestURI);
+            // Prüfen ob die URL Parameter vorhanden sind
 
-            // Prüfe ob alles den syntax vorgibt
-
-            HashMap<String, String> query = getEntities(requestURI);
+            HashMap<String, String> query = response.getEntities();
             if(query.isEmpty()) {
-                String response = getJSONCreator(400)
-                        .addKeys(ERROR)
-                        .addValue(ApiCallsLang.NO_INFORMATION).toString();
-
-                writeResponse(httpExchange, response, 400);
+                response.writeResponse(EMessages.NO_INFORMATION);
                 return;
             }
 
-            if(!query.containsKey(ApiCallsLang.USERNAME) || !query.containsKey(ApiCallsLang.PASSWORD)) {
-                String response = getJSONCreator(400)
-                        .addKeys(ERROR)
-                        .addValue(ApiCallsLang.WRONG_INFORMATION).toString();
-
-                writeResponse(httpExchange, response, 400);
+            if(!query.containsKey(EUser.NAME.toString()) || !query.containsKey(EUser.PASSWORD.toString())) {
+                response.writeResponse(EMessages.WRONG_INFORMATION);
                 return;
             }
 
-            if(EUserPattern.NAME.isMatch(query.get(ApiCallsLang.USERNAME))) {
-                String response = getJSONCreator(400)
-                        .addKeys(ERROR)
-                        .addValue(ApiCallsLang.WRONG_NAME).toString();
-
-                writeResponse(httpExchange, response, 400);
+            if(!EPattern.USERNAME.isMatch(query.get(EUser.NAME.toString()))) {
+                response.writeResponse(EMessages.WRONG_NAME);
                 return;
             }
 
-            if(EUserPattern.PASSWORD.isMatch(query.get(ApiCallsLang.PASSWORD))) {
-                String response = getJSONCreator(400)
-                        .addKeys(ERROR)
-                        .addValue(ApiCallsLang.WRONG_PASSWORD).toString();
-
-                writeResponse(httpExchange, response, 400);
+            if(!EPattern.PASSWORD.isMatch(query.get(EUser.PASSWORD.toString()))) {
+                response.writeResponse(EMessages.WRONG_PASSWORD);
                 return;
             }
 
-            // öffne verbindung
+            // Öffnen der Datenbank
+
+            try {
+                Session session = Azubiprojekt.getSqlPostgres().openSession();
+                Query<APUser> queryUser = session.createNamedQuery("@HQL_GET_SEARCH_USER_NAME", APUser.class);
+            } catch (HibernateException e) {
+                e.printStackTrace();
+                logger.error("Es konnte keine Verbindung zur Datenbank hergestellt werden.");
+                response.writeResponse(EMessages.DATABASE_NOT_AVAILABLE);
+                return;
+            }
 
             Session session = Azubiprojekt.getSqlPostgres().openSession();
             session.beginTransaction();
