@@ -4,12 +4,11 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import org.devcloud.ap.Azubiprojekt;
+import org.devcloud.ap.utils.helper.Response;
 import org.devcloud.ap.utils.JSONCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.net.URI;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -23,90 +22,54 @@ public class Base {
         httpServer.createContext("/api/getserverdate", new ServerDate());
     }
 
-    private Base() {}
-
-    private static JSONCreator getJSONCreator() {
-        return new JSONCreator().addKeys("statuscode");
-    }
-
-    private static void addResponseHeaders(HttpExchange httpExchange) {
-        httpExchange.getResponseHeaders().add("Content-Type", "application/json");
-    }
-
-    private static void writeResponse(HttpExchange httpExchange, String response) throws IOException {
-        httpExchange.sendResponseHeaders(200, response.length());
-
-        OutputStream outputStream = httpExchange.getResponseBody();
-        for(char write : response.toCharArray())
-            outputStream.write(write);
-        outputStream.close();
-    }
-
-    private static void debugRequest(URI requestURI) {
-        logger.debug("{} - was requested", requestURI);
-    }
-
     private static class Check implements HttpHandler {
         @Override
-        public void handle(HttpExchange httpExchange) throws IOException {
-            addResponseHeaders(httpExchange);
+        public void handle(HttpExchange httpExchange) {
+            Response response = new Response(logger, httpExchange);
+            response.addResponseHeaders().debugRequest();
 
-            URI requestURI = httpExchange.getRequestURI();
-            debugRequest(requestURI);
+            JSONCreator jsonCreator = new JSONCreator();
+            jsonCreator.put("api", true);
+            jsonCreator.put("database", Azubiprojekt.getSqlPostgres().isConnection());
+            jsonCreator.put("version", "1.0-SNAPSHOT");
 
-            String connection;
-            Boolean bConnection = Azubiprojekt.getSqlPostgres().isConnection();
-            if(Boolean.TRUE.equals(bConnection))
-                connection = "Database is running!";
-            else
-                connection = "Database is down!";
-
-
-            String response = getJSONCreator()
-                    .addKeys("api", "apiConnected", "database", "databaseConnected", "version")
-                    .addValue(201, "API is running!", true, connection, bConnection, "1.0-SNAPSHOT").toString();
-
-            writeResponse(httpExchange, response);
+            response.writeResponse(jsonCreator);
         }
     }
 
     private static class ServerTime implements HttpHandler {
         @Override
-        public void handle(HttpExchange httpExchange) throws IOException {
-            addResponseHeaders(httpExchange);
-
-            URI requestURI = httpExchange.getRequestURI();
-            debugRequest(requestURI);
+        public void handle(HttpExchange httpExchange) {
+            Response response = new Response(logger, httpExchange);
+            response.addResponseHeaders().debugRequest();
 
             LocalTime localTime = LocalTime.now();
             DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
             String formattedTime = localTime.format(dateTimeFormatter);
 
-            String response = getJSONCreator()
-                    .addKeys("formatted", "raw")
-                    .addValue(201, formattedTime, localTime.toString()).toString();
+            JSONCreator jsonCreator = new JSONCreator();
+            jsonCreator.put("formatted", formattedTime);
+            jsonCreator.put("raw", localTime.toString());
 
-            writeResponse(httpExchange, response);
+            response.writeResponse(jsonCreator);
         }
     }
 
     private static class ServerDate implements HttpHandler {
         @Override
-        public void handle(HttpExchange httpExchange) throws IOException {
-            addResponseHeaders(httpExchange);
-
-            URI requestURI = httpExchange.getRequestURI();
-            debugRequest(requestURI);
+        public void handle(HttpExchange httpExchange) {
+            Response response = new Response(logger, httpExchange);
+            response.addResponseHeaders().debugRequest();
 
             LocalDate localDateTime = LocalDate.now();
             DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
             String formattedDate = localDateTime.format(dateTimeFormatter);
 
-            String response = getJSONCreator()
-                    .addKeys("formatted", "raw")
-                    .addValue(201, formattedDate, localDateTime.toString()).toString();
+            JSONCreator jsonCreator = new JSONCreator();
+            jsonCreator.put("formatted", formattedDate);
+            jsonCreator.put("raw", localDateTime.toString());
 
-            writeResponse(httpExchange, response);
+            response.writeResponse(jsonCreator);
         }
     }
 }

@@ -6,9 +6,9 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import org.devcloud.ap.Azubiprojekt;
 import org.devcloud.ap.database.PgGroup;
-import org.devcloud.ap.database.PgMember;
-import org.devcloud.ap.database.PgRole;
-import org.devcloud.ap.database.PgUser;
+import org.devcloud.ap.database.APMember;
+import org.devcloud.ap.database.APRole;
+import org.devcloud.ap.database.APUser;
 import org.devcloud.ap.lang.ApiCallsLang;
 import org.devcloud.ap.utils.JSONCreator;
 import org.hibernate.Session;
@@ -26,6 +26,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Member {
+
     private static final Logger logger = LoggerFactory.getLogger(Member.class);
 
     public static void register(HttpServer httpServer) {
@@ -204,11 +205,11 @@ public class Member {
             logger.debug("Suche User mit dem Token");
             // hole user
             queryString = "FROM PgUser pguser WHERE pguser.usertoken= :usertoken";
-            queryDatabase = session.createQuery(queryString, PgUser.class);
+            queryDatabase = session.createQuery(queryString, APUser.class);
             queryDatabase.setParameter("usertoken", query.get(EUser.TOKEN.toString()));
-            PgUser pgUser = (PgUser) queryDatabase.uniqueResult();
+            APUser APUser = (APUser) queryDatabase.uniqueResult();
 
-            if(pgUser == null) {
+            if(APUser == null) {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
@@ -222,12 +223,12 @@ public class Member {
             logger.debug("Suche Member mit dem User und Gruppe");
             // hole member
             queryString = "FROM PgMeber pgmember WHERE pgmember.memberuser= :user AND pgmember.membergroup= :group";
-            queryDatabase = session.createQuery(queryString, PgMember.class);
-            queryDatabase.setParameter("user", pgUser);
+            queryDatabase = session.createQuery(queryString, APMember.class);
+            queryDatabase.setParameter("user", APUser);
             queryDatabase.setParameter(ApiCallsLang.GROUP, pgGroup);
-            PgMember pgMember = (PgMember) queryDatabase.uniqueResult();
+            APMember APMember = (APMember) queryDatabase.uniqueResult();
 
-            if(pgMember == null) {
+            if(APMember == null) {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
@@ -241,11 +242,11 @@ public class Member {
             logger.debug("Suche Role Admin");
             // hole role
             queryString = "FROM PgRole pgrole WHERE pgrole.rolename= :rolename";
-            queryDatabase = session.createQuery(queryString, PgRole.class);
+            queryDatabase = session.createQuery(queryString, APRole.class);
             queryDatabase.setParameter(ApiCallsLang.ROLENAME, "Member");
-            PgRole pgRole = (PgRole) queryDatabase.uniqueResult();
+            APRole APRole = (APRole) queryDatabase.uniqueResult();
 
-            if(pgRole == null) {
+            if(APRole == null) {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
@@ -258,11 +259,11 @@ public class Member {
 
             // add user
             queryString = "FROM PgUser pguser WHERE pguser.username= :username";
-            queryDatabase = session.createQuery(queryString, PgUser.class);
+            queryDatabase = session.createQuery(queryString, APUser.class);
             queryDatabase.setParameter(ApiCallsLang.USERNAME, query.get(EUser.USERNAME.toString()));
-            PgUser pgUserAdd = (PgUser) queryDatabase.uniqueResult();
+            APUser APUserAdd = (APUser) queryDatabase.uniqueResult();
 
-            if(pgUserAdd == null) {
+            if(APUserAdd == null) {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
@@ -274,10 +275,10 @@ public class Member {
             }
 
             // erstelle member
-            PgMember pgMemberAdd = new PgMember(pgUserAdd, pgGroup, pgRole);
+            APMember APMemberAdd = new APMember(APUserAdd, pgGroup, APRole);
 
             // add member
-            session.persist(pgMemberAdd);
+            session.persist(APMemberAdd);
 
             session.getTransaction().commit();
             session.close();
@@ -357,11 +358,11 @@ public class Member {
             logger.debug("Suche User mit dem Namen");
             // hole user
             String queryString = "FROM PgUser pguser WHERE pguser.username= :username";
-            Query queryDatabase = session.createQuery(queryString, PgUser.class);
+            Query queryDatabase = session.createQuery(queryString, APUser.class);
             queryDatabase.setParameter(ApiCallsLang.USERNAME, query.get(EUser.USERNAME.toString()));
-            PgUser pgUser = (PgUser) queryDatabase.uniqueResult();
+            APUser APUser = (APUser) queryDatabase.uniqueResult();
 
-            if(pgUser == null) {
+            if(APUser == null) {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
@@ -373,13 +374,13 @@ public class Member {
             }
 
             queryString = "FROM PgMember pgmember WHERE pgmember.memberuser= :user";
-            queryDatabase = session.createQuery(queryString, PgMember.class);
-            queryDatabase.setParameter("user", pgUser);
-            List<PgMember> pgMembers = queryDatabase.list();
+            queryDatabase = session.createQuery(queryString, APMember.class);
+            queryDatabase.setParameter("user", APUser);
+            List<APMember> APMembers = queryDatabase.list();
             logger.debug("Lese member records...");
 
             ArrayList<String> memberList = new ArrayList<>();
-            for (PgMember rawMembers : pgMembers) {
+            for (APMember rawMembers : APMembers) {
                 memberList.add(rawMembers.getMembergroup().getGroupname());
             }
 
@@ -432,11 +433,11 @@ public class Member {
             logger.debug("Suche User mit dem Namen");
             // hole user
             String queryString = "FROM PgUser pguser WHERE pguser.username= :username";
-            Query queryDatabase = session.createQuery(queryString, PgUser.class);
+            Query queryDatabase = session.createQuery(queryString, APUser.class);
             queryDatabase.setParameter(ApiCallsLang.USERNAME, query.get(EUser.USERNAME.toString()));
-            PgUser pgUser = (PgUser) queryDatabase.uniqueResult();
+            APUser APUser = (APUser) queryDatabase.uniqueResult();
 
-            if(pgUser == null) {
+            if(APUser == null) {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
@@ -450,11 +451,11 @@ public class Member {
             logger.debug("Suche User mit dem Token");
             // hole user
             queryString = "FROM PgUser pguser WHERE pguser.token= :token";
-            queryDatabase = session.createQuery(queryString, PgUser.class);
+            queryDatabase = session.createQuery(queryString, APUser.class);
             queryDatabase.setParameter("token", query.get(EUser.TOKEN.toString()));
-            PgUser pgUserToken = (PgUser) queryDatabase.uniqueResult();
+            APUser APUserToken = (APUser) queryDatabase.uniqueResult();
 
-            if(pgUserToken == null) {
+            if(APUserToken == null) {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
@@ -485,12 +486,12 @@ public class Member {
 
             // prüfe ob pgUserToken rolle admin hat
             queryString = "FROM PgMember pgmember WHERE pgmember.memberuser= :user AND pgmember.membergroup= :group";
-            queryDatabase = session.createQuery(queryString, PgMember.class);
-            queryDatabase.setParameter("user", pgUserToken);
+            queryDatabase = session.createQuery(queryString, APMember.class);
+            queryDatabase.setParameter("user", APUserToken);
             queryDatabase.setParameter(ApiCallsLang.GROUP, pgGroup);
-            PgMember pgMemberToken = (PgMember) queryDatabase.uniqueResult();
+            APMember APMemberToken = (APMember) queryDatabase.uniqueResult();
 
-            if(pgMemberToken == null) {
+            if(APMemberToken == null) {
                 session.close();
                 // user ist nicht in der gruppe
                 String response = getJSONCreator(400)
@@ -501,7 +502,7 @@ public class Member {
                 return;
             }
 
-            if(pgMemberToken.getMemberrole().getRolename().equals("Admin")) {
+            if(APMemberToken.getMemberrole().getRolename().equals("Admin")) {
                 session.close();
                 // user ist nicht in der gruppe
                 String response = getJSONCreator(400)
@@ -515,11 +516,11 @@ public class Member {
             logger.debug("Suche Rolle mit dem Namen");
             // hole rolle
             queryString = "FROM PgRole pgrole WHERE pgrole.rolename= :rolename";
-            queryDatabase = session.createQuery(queryString, PgRole.class);
+            queryDatabase = session.createQuery(queryString, APRole.class);
             queryDatabase.setParameter(ApiCallsLang.ROLENAME, query.get(ERole.NAME.toString()));
-            PgRole pgRole = (PgRole) queryDatabase.uniqueResult();
+            APRole APRole = (APRole) queryDatabase.uniqueResult();
 
-            if(pgRole == null) {
+            if(APRole == null) {
                 session.close();
                 // rolle existiert nicht
                 String response = getJSONCreator(400)
@@ -533,12 +534,12 @@ public class Member {
             logger.debug("Suche Member mit dem User und der Gruppe");
             // hole member
             queryString = "FROM PgMember pgmember WHERE pgmember.memberuser= :user AND pgmember.membergroup= :group";
-            queryDatabase = session.createQuery(queryString, PgMember.class);
-            queryDatabase.setParameter("user", pgUser);
+            queryDatabase = session.createQuery(queryString, APMember.class);
+            queryDatabase.setParameter("user", APUser);
             queryDatabase.setParameter(ApiCallsLang.GROUP, pgGroup);
-            PgMember pgMember = (PgMember) queryDatabase.uniqueResult();
+            APMember APMember = (APMember) queryDatabase.uniqueResult();
 
-            if(pgMember == null) {
+            if(APMember == null) {
                 session.close();
                 // member existiert nicht
                 String response = getJSONCreator(400)
@@ -550,10 +551,10 @@ public class Member {
             }
 
             logger.debug("Setze Rolle des Members");
-            pgMember.setMemberrole(pgRole);
+            APMember.setMemberrole(APRole);
 
             logger.debug("Speichere Member");
-            session.persist(pgMember);
+            session.persist(APMember);
 
             session.close();
 

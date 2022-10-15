@@ -11,8 +11,8 @@ import java.io.Serializable;
 @Entity
 @Table
 
-@NamedQuery(name = "@HQL_GET_ALL_USER", query = "FROM APRole apuser")
-@NamedQuery(name = "@HQL_GET_ALL_USER_COUNT", query = "SELECT COUNT(*) FROM APUser apuser")
+@NamedQuery(name = "@HQL_GET_ALL_USERS", query = "FROM APRole apuser")
+@NamedQuery(name = "@HQL_GET_SEARCH_USER_COUNT", query = "SELECT COUNT(*) FROM APUser apuser WHERE apuser.name = :name")
 @NamedQuery(name = "@HQL_GET_SEARCH_USER_ID", query = "FROM APUser apuser WHERE apuser.id = :id")
 @NamedQuery(name = "@HQL_GET_SEARCH_USER_NAME", query = "FROM APUser apuser WHERE apuser.name = :name")
 @NamedQuery(name = "@HQL_GET_SEARCH_USER_TOKEN", query = "FROM APUser apuser WHERE apuser.token = :token")

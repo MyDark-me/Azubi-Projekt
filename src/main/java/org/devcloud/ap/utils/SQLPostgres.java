@@ -2,6 +2,7 @@ package org.devcloud.ap.utils;
 
 import io.sentry.Sentry;
 import lombok.Getter;
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
@@ -42,7 +43,7 @@ public class SQLPostgres {
         }
     }
 
-    public Session openSession() {
+    public Session openSession() throws HibernateException {
         return this.sessionFactory.openSession();
     }
 

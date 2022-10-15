@@ -1,255 +1,162 @@
 package org.devcloud.ap.apicalls;
 
-import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import org.devcloud.ap.Azubiprojekt;
-import org.devcloud.ap.database.PgGroup;
-import org.devcloud.ap.database.PgMember;
-import org.devcloud.ap.database.PgRole;
-import org.devcloud.ap.database.PgUser;
-import org.devcloud.ap.lang.ApiCallsLang;
-import org.devcloud.ap.utils.JSONCreator;
+import org.devcloud.ap.database.APGroup;
+import org.devcloud.ap.database.enumeration.EGroup;
+import org.devcloud.ap.database.enumeration.EUser;
+import org.devcloud.ap.database.enumeration.pattern.EPattern;
+import org.devcloud.ap.utils.helper.Response;
+import org.devcloud.ap.utils.helper.ResponseMessage;
+import org.devcloud.ap.database.APMember;
+import org.devcloud.ap.database.APRole;
+import org.devcloud.ap.database.APUser;
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.URI;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Group {
     private static final Logger logger = LoggerFactory.getLogger(Group.class);
 
     public static void register(HttpServer httpServer) {
         httpServer.createContext("/api/group/create", new Create());
+        /*
         httpServer.createContext("/api/group/delete", new Delete());
         httpServer.createContext("/api/group/users", new Users());
+        */
     }
 
-    private Group() {}
+    private enum EMessages implements ResponseMessage {
+        DATABASE_NOT_AVAILABLE(500, "Datenbank ist nicht Erreichbar!"),
+        NO_INFORMATION(400, "Es wurden keine Informationen mitgegeben."),
+        WRONG_INFORMATION(400, "Es wurden nicht die richtigen Informationen mitgegeben."),
+        WRONG_NAME(400, "Der Name entspricht nicht den Vorgaben."),
+        ALREADY_NAME_USE(400, "Der Gruppenname wurde schon vergeben."),
+        ROLE_NOT_EXIST(400, "Die Rolle Admin existiert nicht."),
+        TOKEN_NOT_EXIST(400, "Der Token ist nicht gültig."),
+        GROUP_SUCCESSFUL_CREATED(201, "Gruppe wurde Erfolgreich erstellt!"),
+        INTERNAL_SERVER_ERROR(500, "Internal Server Error");
 
-    private static final String ERROR = "error";
+        private final int rCode;
+        private final String message;
 
-    private static void addResponseHeaders(HttpExchange httpExchange) {
-        httpExchange.getResponseHeaders().add("Content-Type", "application/json");
-        httpExchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-    }
-
-    private static void writeResponse(HttpExchange httpExchange, String response, int statusCode) throws IOException {
-        httpExchange.sendResponseHeaders(statusCode, response.length());
-
-        OutputStream outputStream = httpExchange.getResponseBody();
-        for(char write : response.toCharArray())
-            outputStream.write(write);
-        outputStream.close();
-    }
-
-    private static JSONCreator getJSONCreator(int statusCode) {
-        return new JSONCreator().addKeys("statuscode").addValue(statusCode);
-    }
-
-    private static void debugRequest(URI requestURI) {
-        logger.debug("{} - was requested", requestURI);
-    }
-
-    private static HashMap<String, String> getEntities(URI uri) {
-        HashMap<String, String> feedback = new HashMap<>();
-        String query = uri.getQuery();
-        if (query == null) {
-            logger.debug("Nothing found in the List");
-            return feedback;
+        EMessages(int rCode, String message) {
+            this.rCode = rCode;
+            this.message = message;
         }
 
-        String[] list = query.split("&");
-        logger.debug("Found list length {}", list.length);
-
-        for (String raw : list) {
-            String[] splitter = raw.split("=");
-            if(splitter.length == 2) {
-                logger.debug("Found key {} with value {}", splitter[0], splitter[1]);
-                feedback.put(splitter[0], splitter[1]);
-            }
-            else
-                logger.debug("No key and value found!");
-
+        @Override
+        public int getRCode() {
+            return rCode;
         }
-        return feedback;
-    }
 
-    private enum EGroup {
-        NAME("name"), COLOR("color");
-        final String name;
-        EGroup(String name) { this.name = name; }
         @Override
-        public String toString() {return name.toLowerCase(); }
-    }
-
-    private enum EGroupPattern {
-        /*
-         * Name:
-         * mindestens 3 zeichen
-         * erlaubt sind:
-         * groß und klein buchstaben
-         * 0-9, _ und -
-         */
-        NAME("^[a-zA-Z0-9-_]{3,}$");
-
-        final String aPattern;
-        EGroupPattern(String pattern) { this.aPattern = pattern; }
-        @Override
-        public String toString() {return aPattern; }
-
-        public boolean isMatch(CharSequence input) {
-            Pattern pattern = Pattern.compile(aPattern);
-            Matcher matcher = pattern.matcher(input);
-            return !matcher.find();
+        public String getMessage() {
+            return message;
         }
     }
 
     private static class Create implements HttpHandler {
         @Override
-        public void handle(HttpExchange httpExchange) throws IOException {
-            addResponseHeaders(httpExchange);
+        public void handle(HttpExchange httpExchange) {
+            Response response = new Response(logger, httpExchange);
+            response.addResponseHeaders().debugRequest();
 
             if(!Azubiprojekt.getSqlPostgres().isConnection()) {
-                String response = getJSONCreator(500)
-                        .addKeys(ERROR)
-                        .addValue(ApiCallsLang.DATABASE_NOT_AVAILABLE).toString();
-
-                writeResponse(httpExchange, response, 500);
+                response.writeResponse(EMessages.DATABASE_NOT_AVAILABLE);
                 return;
             }
 
-            URI requestURI = httpExchange.getRequestURI();
-            debugRequest(requestURI);
+            // Prüfen ob die URL Parameter vorhanden sind
 
-            // Prüfe ob alles den syntax vorgibt
-
-            HashMap<String, String> query = getEntities(requestURI);
+            HashMap<String, String> query = response.getEntities();
             if(query.isEmpty()) {
-                String response = getJSONCreator(400)
-                        .addKeys(ERROR)
-                        .addValue(ApiCallsLang.NO_INFORMATION).toString();
-
-                writeResponse(httpExchange, response, 400);
+                response.writeResponse(EMessages.NO_INFORMATION);
                 return;
             }
 
-            if(!query.containsKey(EGroup.NAME.toString()) || !query.containsKey(EGroup.COLOR.toString()) || !query.containsKey(ApiCallsLang.TOKEN)) {
-                String response = getJSONCreator(400)
-                        .addKeys(ERROR)
-                        .addValue(ApiCallsLang.WRONG_INFORMATION).toString();
-
-                writeResponse(httpExchange, response, 400);
+            if(!query.containsKey(EGroup.NAME.toString()) || !query.containsKey(EGroup.COLOR.toString()) || !query.containsKey(EUser.TOKEN.toString())) {
+                response.writeResponse(EMessages.WRONG_INFORMATION);
                 return;
             }
 
-            if(EGroupPattern.NAME.isMatch(query.get(EGroup.NAME.toString()))) {
-                String response = getJSONCreator(400)
-                        .addKeys(ERROR)
-                        .addValue(ApiCallsLang.WRONG_NAME).toString();
-
-                writeResponse(httpExchange, response, 400);
+            if(!EPattern.NROMAL.isMatch(query.get(EGroup.NAME.toString()))) {
+                response.writeResponse(EMessages.WRONG_NAME);
                 return;
             }
 
-            // öffne verbindung
+            // Öffnen der Datenbank
+            try {
+                Session session = Azubiprojekt.getSqlPostgres().openSession();
 
-            Session session = Azubiprojekt.getSqlPostgres().openSession();
-            session.beginTransaction();
+                // Prüfen ob die Gruppe schon existiert
+                Query<Long> queryGroup = session.createNamedQuery("@HQL_GET_SEARCH_GROUP_COUNT", Long.class);
+                queryGroup.setParameter("name", query.get(EGroup.NAME.toString()));
+                Long count = queryGroup.uniqueResult();
 
-            // erstelle group
-            PgGroup pgGroup = new PgGroup(
-                    query.get(EGroup.NAME.toString()),
-                    query.get(EGroup.COLOR.toString())
-            );
+                logger.debug("Es wurden {} Gruppen gefunden.", count);
+                if(count > 0) {
+                    response.writeResponse(EMessages.ALREADY_NAME_USE);
+                    return;
+                }
 
-            // prüfe ob die gruppe existiert
-            String queryString = "SELECT COUNT(*) FROM PgGroup pggroup WHERE pggroup.groupname= :name";
-            Query queryDatabase = session.createQuery(queryString, Long.class);
-            queryDatabase.setParameter("name", pgGroup.getGroupname());
-            Long count = (Long) queryDatabase.uniqueResult();
+                // Ersellen der Gruppe
+                APGroup apGroup = new APGroup(
+                        query.get(EGroup.NAME.toString()),
+                        query.get(EGroup.COLOR.toString())
+                );
 
-            logger.debug("Es wurden {} gruppen gefunden.", count);
+                // Hole Admin Rolle
+                Query<APRole> queryRole = session.createNamedQuery("@HQL_GET_SEARCH_ROLE_NAME", APRole.class);
+                queryRole.setParameter("name", "Admin");
 
-            if(count > 0) {
-                // user exist and close session
+                if(queryRole.list().isEmpty()) {
+                    session.close();
+                    response.writeResponse(EMessages.ALREADY_NAME_USE);
+                    return;
+                }
+
+                // Hole den User mit dem Token
+                Query<APUser> queryUser = session.createNamedQuery("@HQL_GET_SEARCH_USER_TOKEN", APUser.class);
+                queryUser.setParameter("token", query.get(EUser.TOKEN.toString()));
+
+                if(queryUser.list().isEmpty()) {
+                    session.close();
+                    response.writeResponse(EMessages.TOKEN_NOT_EXIST);
+                    return;
+                }
+
+                // Erzeuge den Member
+                APMember apMember = new APMember(
+                        queryUser.getSingleResult(),
+                        apGroup,
+                        queryRole.getSingleResult()
+                );
+
+                // Speichere die Gruppe und den Member
+                session.beginTransaction();
+                session.persist(apGroup);
+                session.persist(apMember);
+
+                session.getTransaction().commit();
+                logger.debug("ID {} wurde mit dem Group {} erfolgreich erstellt.", apGroup.getId(), apGroup.getName());
+                logger.debug("ID {} Member wurde erfolgreich erstellt.", apMember.getId());
                 session.close();
 
-                String response = getJSONCreator(400)
-                        .addKeys(ERROR)
-                        .addValue("Der Gruppenname wurde schon vergeben.").toString();
-
-                writeResponse(httpExchange, response, 400);
-                return;
+                response.writeResponse(EMessages.GROUP_SUCCESSFUL_CREATED);
+            } catch (HibernateException ex) {
+                logger.error("Fehler bei einer Datenbanksitzung", ex);
+                response.writeResponse(EMessages.INTERNAL_SERVER_ERROR);
             }
-
-            logger.debug("Suche Role Admin");
-            // hole role
-            queryString = "FROM PgRole pgrole WHERE pgrole.rolename= :rolename";
-            queryDatabase = session.createQuery(queryString, PgRole.class);
-            queryDatabase.setParameter("rolename", "Admin");
-            PgRole pgRole = (PgRole) queryDatabase.uniqueResult();
-
-            if(pgRole == null) {
-                session.close();
-                // user existiert nicht
-                String response = getJSONCreator(400)
-                        .addKeys(ERROR)
-                        .addValue("Die Rolle Admin existiert nicht.").toString();
-
-                writeResponse(httpExchange, response, 400);
-                return;
-            }
-
-            logger.debug("Suche User mit dem Token");
-            // hole user
-            queryString = "FROM PgUser pguser WHERE pguser.usertoken= :usertoken";
-            queryDatabase = session.createQuery(queryString, PgUser.class);
-            queryDatabase.setParameter("usertoken", query.get(ApiCallsLang.TOKEN));
-            PgUser pgUser = (PgUser) queryDatabase.uniqueResult();
-
-            if(pgUser == null) {
-                session.close();
-                // user existiert nicht
-                String response = getJSONCreator(400)
-                        .addKeys(ERROR)
-                        .addValue("Der Token ist nicht gültig.").toString();
-
-                writeResponse(httpExchange, response, 400);
-                return;
-            }
-
-            logger.debug("Erstelle Member");
-            // erstelle member
-            PgMember pgMember = new PgMember(pgUser, pgGroup, pgRole);
-
-            // add group
-            session.persist(pgGroup);
-            // add member
-            session.persist(pgMember);
-
-            session.getTransaction().commit();
-            logger.debug("ID {} wurde mit dem Group {} erfolgreich erstellt.", pgGroup.getGroupid(), pgGroup.getGroupname());
-            logger.debug("ID {} Member wurde erfolgreich erstellt.", pgMember.getMemberid());
-            session.close();
-
-
-            String response = getJSONCreator(201)
-                    .addKeys("success", "name")
-                    .addValue( "Gruppe wurde Erfolgreich erstellt!", query.get(EGroup.NAME.toString())).toString();
-
-            writeResponse(httpExchange, response, 201);
         }
     }
+    /*
 
     private static class Delete implements HttpHandler {
         @Override
@@ -324,11 +231,11 @@ public class Group {
             logger.debug("Suche User mit dem Token");
             // hole user
             queryString = "FROM PgUser pguser WHERE pguser.usertoken= :usertoken";
-            queryDatabase = session.createQuery(queryString, PgUser.class);
+            queryDatabase = session.createQuery(queryString, APUser.class);
             queryDatabase.setParameter("usertoken", query.get(ApiCallsLang.TOKEN));
-            PgUser pgUser = (PgUser) queryDatabase.uniqueResult();
+            APUser APUser = (APUser) queryDatabase.uniqueResult();
 
-            if(pgUser == null) {
+            if(APUser == null) {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
@@ -342,12 +249,12 @@ public class Group {
             logger.debug("Suche Member mit dem User und Gruppe");
             // hole member
             queryString = "FROM PgMeber pgmember WHERE pgmember.memberuser= :user AND pgmember.membergroup= :group";
-            queryDatabase = session.createQuery(queryString, PgMember.class);
-            queryDatabase.setParameter("user", pgUser);
+            queryDatabase = session.createQuery(queryString, APMember.class);
+            queryDatabase.setParameter("user", APUser);
             queryDatabase.setParameter("group", pgGroup);
-            PgMember pgMember = (PgMember) queryDatabase.uniqueResult();
+            APMember APMember = (APMember) queryDatabase.uniqueResult();
 
-            if(pgMember == null) {
+            if(APMember == null) {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
@@ -358,7 +265,7 @@ public class Group {
                 return;
             }
 
-            if(!pgMember.getMemberrole().getRolename().equals("Admin")) {
+            if(!APMember.getMemberrole().getRolename().equals("Admin")) {
                 session.close();
                 // user existiert nicht
                 String response = getJSONCreator(400)
@@ -461,13 +368,13 @@ public class Group {
             }
 
             queryString = "FROM PgMember pgmember WHERE pgmember.membergroup= :group";
-            queryDatabase = session.createQuery(queryString, PgRole.class);
+            queryDatabase = session.createQuery(queryString, APMember.class);
             queryDatabase.setParameter("group", pgGroup);
-            List<PgMember> pgMembers = queryDatabase.list();
+            List<APMember> APMembers = queryDatabase.list();
             logger.debug("Lese member records...");
 
             ArrayList<String> memberList = new ArrayList<>();
-            for (PgMember rawMembers : pgMembers) {
+            for (APMember rawMembers : APMembers) {
                 memberList.add(rawMembers.getMemberuser().getUsername());
             }
 
@@ -478,4 +385,5 @@ public class Group {
             writeResponse(httpExchange, response, 201);
         }
     }
+    */
 }

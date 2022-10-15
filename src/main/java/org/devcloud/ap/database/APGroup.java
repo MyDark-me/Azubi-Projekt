@@ -12,6 +12,7 @@ import java.io.Serializable;
 @Table
 
 @NamedQuery(name = "@HQL_GET_ALL_GROUPS", query = "FROM APGroup apgroup")
+@NamedQuery(name = "@HQL_GET_SEARCH_GROUP_COUNT", query = "SELECT COUNT(*) FROM APGroup apgroup WHERE apgroup.name = :name")
 @NamedQuery(name = "@HQL_GET_SEARCH_GROUP_ID", query = "FROM APGroup apgroup WHERE apgroup.id = :id")
 @NamedQuery(name = "@HQL_GET_SEARCH_GROUP_NAME", query = "FROM APGroup apgroup WHERE apgroup.name = :name")
 
