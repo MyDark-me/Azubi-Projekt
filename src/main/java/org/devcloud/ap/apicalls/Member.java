@@ -8,8 +8,13 @@ import org.devcloud.ap.Azubiprojekt;
 import org.devcloud.ap.database.APMember;
 import org.devcloud.ap.database.APRole;
 import org.devcloud.ap.database.APUser;
+import org.devcloud.ap.database.enumeration.EGroup;
+import org.devcloud.ap.database.enumeration.EUser;
+import org.devcloud.ap.database.enumeration.pattern.EPattern;
 import org.devcloud.ap.lang.ApiCallsLang;
 import org.devcloud.ap.utils.JSONCreator;
+import org.devcloud.ap.utils.helper.Response;
+import org.devcloud.ap.utils.helper.ResponseMessage;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
 import org.slf4j.Logger;
@@ -35,146 +40,63 @@ public class Member {
         httpServer.createContext("/api/member/edit", new Edit());
     }
 
-    private Member() {}
+    private enum EMessages implements ResponseMessage {
+        DATABASE_NOT_AVAILABLE(500, "Datenbank ist nicht Erreichbar!"),
+        NO_INFORMATION(400, "Es wurden keine Informationen mitgegeben."),
+        WRONG_INFORMATION(400, "Es wurden nicht die richtigen Informationen mitgegeben."),
+        WRONG_NAME(400, "Der Name entspricht nicht den Vorgaben."),
+        INTERNAL_SERVER_ERROR(500, "Internal Server Error");
 
-    private static final String ERROR = "error";
+        private final int rCode;
+        private final String message;
 
-    private static void addResponseHeaders(HttpExchange httpExchange) {
-        httpExchange.getResponseHeaders().add("Content-Type", "application/json");
-        httpExchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-    }
-
-    private static void writeResponse(HttpExchange httpExchange, String response, int statusCode) throws IOException {
-        httpExchange.sendResponseHeaders(statusCode, response.length());
-
-        OutputStream outputStream = httpExchange.getResponseBody();
-        for(char write : response.toCharArray())
-            outputStream.write(write);
-        outputStream.close();
-    }
-
-    private static JSONCreator getJSONCreator(int statusCode) {
-        return new JSONCreator().addKeys("statuscode").addValue(statusCode);
-    }
-
-    private static void debugRequest(URI requestURI) {
-        logger.debug("{} - was requested", requestURI);
-    }
-
-    private static HashMap<String, String> getEntities(URI uri) {
-        HashMap<String, String> feedback = new HashMap<>();
-        String query = uri.getQuery();
-        if (query == null) {
-            logger.debug("Nothing found in the List");
-            return feedback;
+        EMessages(int rCode, String message) {
+            this.rCode = rCode;
+            this.message = message;
         }
 
-        String[] list = query.split("&");
-        logger.debug("Found list length {}", list.length);
-
-        for (String raw : list) {
-            String[] splitter = raw.split("=");
-            if(splitter.length == 2) {
-                logger.debug("Found key {} with value {}", splitter[0], splitter[1]);
-                feedback.put(splitter[0], splitter[1]);
-            }
-            else
-                logger.debug("No key and value found!");
-
+        @Override
+        public int getRCode() {
+            return rCode;
         }
-        return feedback;
-    }
 
-    private enum EGroup {
-        NAME("name"), COLOR("color");
-        final String name;
-        EGroup(String name) { this.name = name; }
         @Override
-        public String toString() {return name.toLowerCase(); }
-    }
-
-    private enum EUser {
-        USERNAME(ApiCallsLang.USERNAME), PASSWORD("password"), EMAIL("email"), TOKEN("token");
-        final String name;
-        EUser(String name) { this.name = name; }
-        @Override
-        public String toString() {return name.toLowerCase(); }
-    }
-
-    private enum ERole {
-        NAME(ApiCallsLang.ROLENAME);
-        final String name;
-        ERole(String name) { this.name = name; }
-        @Override
-        public String toString() {return name.toLowerCase(); }
-    }
-
-    private enum EGroupPattern {
-        /*
-         * Name:
-         * mindestens 3 zeichen
-         * erlaubt sind:
-         * groß und klein buchstaben
-         * 0-9, _ und -
-         */
-        NAME("^[a-zA-Z0-9-_]{3,}$");
-
-        final String aPattern;
-        EGroupPattern(String pattern) { this.aPattern = pattern; }
-        @Override
-        public String toString() {return aPattern; }
-
-        public boolean isMatch(CharSequence input) {
-            Pattern pattern = Pattern.compile(aPattern);
-            Matcher matcher = pattern.matcher(input);
-            return !matcher.find();
+        public String getMessage() {
+            return message;
         }
     }
 
     private static class Join implements HttpHandler {
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
-            addResponseHeaders(httpExchange);
+            Response response = new Response(logger, httpExchange);
+            response.addResponseHeaders().debugRequest();
 
             if(!Azubiprojekt.getSqlPostgres().isConnection()) {
-                String response = getJSONCreator(500)
-                        .addKeys(ERROR)
-                        .addValue(ApiCallsLang.DATABASE_NOT_AVAILABLE).toString();
-
-                writeResponse(httpExchange, response, 500);
+                response.writeResponse(EMessages.DATABASE_NOT_AVAILABLE);
                 return;
             }
 
-            URI requestURI = httpExchange.getRequestURI();
-            debugRequest(requestURI);
+            // Prüfen ob die URL Parameter vorhanden sind
 
-            // Prüfe ob alles den syntax vorgibt
-
-            HashMap<String, String> query = getEntities(requestURI);
+            HashMap<String, String> query = response.getEntities();
             if(query.isEmpty()) {
-                String response = getJSONCreator(400)
-                        .addKeys(ERROR)
-                        .addValue("Es wurden keine Informationen mitgegeben.").toString();
-
-                writeResponse(httpExchange, response, 400);
+                response.writeResponse(EMessages.NO_INFORMATION);
                 return;
             }
 
-            if(!query.containsKey(EUser.USERNAME.toString()) ||!query.containsKey(EGroup.NAME.toString()) || !query.containsKey(EUser.TOKEN.toString())) {
-                String response = getJSONCreator(400)
-                        .addKeys(ERROR)
-                        .addValue(ApiCallsLang.WRONG_INFORMATION).toString();
-
-                writeResponse(httpExchange, response, 400);
+            if(!query.containsKey(EUser.NAME.toString()) || !query.containsKey(EGroup.NAME.toString()) || !query.containsKey(EUser.TOKEN.toString())) {
+                response.writeResponse(EMessages.WRONG_INFORMATION);
                 return;
             }
 
-            if(EGroupPattern.NAME.isMatch(query.get(EGroup.NAME.toString()))) {
-                String response = getJSONCreator(400)
-                        .addKeys(ERROR)
-                        .addValue("Der Name entspricht nicht den Vorgaben.").toString();
+            if(!EPattern.NAME.isMatch(query.get(EUser.NAME.toString()))) {
+                response.writeResponse(EMessages.WRONG_NAME);
+                return;
+            }
 
-                writeResponse(httpExchange, response, 400);
+            if(!EPattern.NAME.isMatch(query.get(EGroup.NAME.toString()))) {
+                response.writeResponse(EMessages.WRONG_NAME);
                 return;
             }
 
@@ -311,27 +233,19 @@ public class Member {
     private static class Groups implements HttpHandler {
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
-            addResponseHeaders(httpExchange);
+            Response response = new Response(logger, httpExchange);
+            response.addResponseHeaders().debugRequest();
 
             if(!Azubiprojekt.getSqlPostgres().isConnection()) {
-                String response = getJSONCreator(500)
-                        .addKeys(ERROR)
-                        .addValue(ApiCallsLang.DATABASE_NOT_AVAILABLE).toString();
-
-                writeResponse(httpExchange, response, 500);
+                response.writeResponse(EMessages.DATABASE_NOT_AVAILABLE);
                 return;
             }
 
-            URI requestURI = httpExchange.getRequestURI();
-            debugRequest(requestURI);
+            // Prüfen ob die URL Parameter vorhanden sind
 
-            HashMap<String, String> query = getEntities(requestURI);
+            HashMap<String, String> query = response.getEntities();
             if(query.isEmpty()) {
-                String response = getJSONCreator(400)
-                        .addKeys(ERROR)
-                        .addValue("Es wurden keine Informationen mitgegeben.").toString();
-
-                writeResponse(httpExchange, response, 400);
+                response.writeResponse(EMessages.NO_INFORMATION);
                 return;
             }
 
