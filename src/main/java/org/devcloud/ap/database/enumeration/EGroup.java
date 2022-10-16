@@ -1,9 +1,9 @@
 package org.devcloud.ap.database.enumeration;
 
 public enum EGroup {
-    ID("id"),
-    NAME("name"),
-    COLOR("color");
+    ID("groupID"),
+    NAME("groupName"),
+    COLOR("groupColor");
 
     final String name;
 

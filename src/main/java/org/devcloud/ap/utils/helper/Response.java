@@ -4,39 +4,35 @@ import com.sun.net.httpserver.HttpExchange;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.devcloud.ap.utils.JSONCreator;
 import org.slf4j.Logger;
 
+@RequiredArgsConstructor
 public class Response {
 
-    private  final Logger logger;
+    @Getter
+    private final Logger logger;
+    @Getter
     private final HttpExchange httpExchange;
 
-    public Response(Logger logger, HttpExchange httpExchange) {
-        this.logger = logger;
-        this.httpExchange = httpExchange;
-    }
-
-    public Response debugRequest() {
+    public void debugRequest() {
         URI requestURI = httpExchange.getRequestURI();
         logger.debug("{} - was requested", requestURI);
-        return this;
     }
 
-    public Response addResponseHeaders() {
+    public void addResponseHeaders() {
         this.httpExchange.getResponseHeaders().add("Content-Type", "application/json");
         this.httpExchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-        return this;
     }
 
-    public HashMap<String, String> getEntities() {
-        HashMap<String, String> feedback = new HashMap<>();
+    public Map<String, String> getEntities() {
+        Map<String, String> feedback = new HashMap<>();
         URI requestURI = httpExchange.getRequestURI();
         String query = requestURI.getQuery();
         if (query == null) {
