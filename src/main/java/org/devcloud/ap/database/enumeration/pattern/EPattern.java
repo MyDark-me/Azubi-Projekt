@@ -11,7 +11,7 @@ public enum EPattern {
      * groß und klein buchstaben
      * 0-9, _ und -
      */
-    USERNAME("^[a-zA-Z0-9-_]{3,}$"),
+    NAME("^[a-zA-Z0-9-_]{3,}$"),
     /*
      * Password:
      * mindestens 8 zeichen
@@ -20,6 +20,7 @@ public enum EPattern {
      */
     PASSWORD("^(?=.*?[A-Z])(?=(.*[a-z]){1,})(?=(.*[\\W])*)(?!.*\\s).{8,}$"),
     EMAIL("^[a-zA-Z0-9.!#$%&'*+=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"),
+    TOKEN("^[a-zA-Z0-9-_]{6,}$"),
     // Source: https://ihateregex.io/
     PHONE_NUMBER("^[0-9]{3}-[0-9]{3}-[0-9]{4}$"),
     // Source: https://ihateregex.io/

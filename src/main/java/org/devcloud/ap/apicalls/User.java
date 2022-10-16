@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URI;
 import java.security.SecureRandom;
 import java.util.HashMap;
 
@@ -103,7 +102,7 @@ public class User {
                 return;
             }
 
-            if(!EPattern.USERNAME.isMatch(query.get(EUser.NAME.toString()))) {
+            if(!EPattern.NAME.isMatch(query.get(EUser.NAME.toString()))) {
                 response.writeResponse(EMessages.WRONG_NAME);
                 return;
             }
@@ -120,8 +119,7 @@ public class User {
 
             // Öffnen der Datenbank
 
-            try {
-                Session session = Azubiprojekt.getSqlPostgres().openSession();
+            try(Session session = Azubiprojekt.getSqlPostgres().openSession()) {
 
                 // Prüfen ob der Benutzer schon existiert
                 Query<Long> queryUser = session.createNamedQuery("@HQL_GET_SEARCH_USER_COUNT", Long.class);
@@ -148,8 +146,8 @@ public class User {
                 session.persist(apUser);
 
                 session.getTransaction().commit();
-                logger.debug("ID {} wurde mit dem User {} erfolgreich erstellt.", apUser.getId(), apUser.getName());
                 session.close();
+                logger.debug("ID {} wurde mit dem User {} erfolgreich erstellt.", apUser.getId(), apUser.getName());
 
                 JSONCreator jsonCreator = new JSONCreator();
                 jsonCreator.put(EUser.NAME.toString(), apUser.getName());
@@ -157,7 +155,6 @@ public class User {
                 jsonCreator.put(EUser.TOKEN.toString(), apUser.getToken());
 
                 response.writeResponse(jsonCreator);
-
             } catch (HibernateException ex) {
                 logger.error("Fehler bei einer Datenbanksitzung", ex);
                 response.writeResponse(EMessages.INTERNAL_SERVER_ERROR);
@@ -188,9 +185,7 @@ public class User {
             }
 
             // Öffnen der Datenbank
-
-            try {
-                Session session = Azubiprojekt.getSqlPostgres().openSession();
+            try(Session session = Azubiprojekt.getSqlPostgres().openSession()) {
 
                 Query<APUser> queryUser = session.createNamedQuery("@HQL_GET_SEARCH_USER_TOKEN", APUser.class);
                 queryUser.setParameter("token", query.get(EUser.TOKEN.toString()));
@@ -204,9 +199,11 @@ public class User {
                 APUser apUser = queryUser.uniqueResult();
                 logger.debug("Es wurde der User {} gefunden.", apUser.getName());
 
+                session.beginTransaction();
+
                 session.remove(apUser);
                 session.getTransaction().commit();
-                logger.debug("Der benutzer dem den token {} gehört hatte wurde gelöscht.", query.get(ApiCallsLang.TOKEN));
+                logger.debug("Der Benutzer dem den token {} gehört hatte wurde gelöscht.", query.get(ApiCallsLang.TOKEN));
                 session.close();
 
                 response.writeResponse(EMessages.USER_DELETED);
@@ -231,12 +228,17 @@ public class User {
 
             // Prüfen ob die URL Parameter vorhanden sind
             HashMap<String, String> query = response.getEntities();
+            if(query.isEmpty()) {
+                response.writeResponse(EMessages.NO_INFORMATION);
+                return;
+            }
+
             if(!query.containsKey(EUser.NAME.toString()) || !query.containsKey(EUser.PASSWORD.toString()) || !query.containsKey(EUser.EMAIL.toString())) {
                 response.writeResponse(EMessages.WRONG_INFORMATION);
                 return;
             }
 
-            if(!EPattern.USERNAME.isMatch(query.get(EUser.NAME.toString()))) {
+            if(!EPattern.NAME.isMatch(query.get(EUser.NAME.toString()))) {
                 response.writeResponse(EMessages.WRONG_NAME);
                 return;
             }
@@ -252,8 +254,7 @@ public class User {
             }
 
             // Öffnen der Datenbank
-            try {
-                Session session = Azubiprojekt.getSqlPostgres().openSession();
+            try(Session session = Azubiprojekt.getSqlPostgres().openSession()) {
                 Query<APUser> queryUser = session.createNamedQuery("@HQL_GET_SEARCH_USER_NAME", APUser.class);
                 queryUser.setParameter("name", query.get(EUser.NAME.toString()));
 
@@ -292,7 +293,6 @@ public class User {
                 jsonCreator.put(EUser.TOKEN.toString(), apUser.getToken());
 
                 response.writeResponse(jsonCreator);
-
             } catch (HibernateException e) {
                 e.printStackTrace();
                 logger.error("Es konnte keine Verbindung zur Datenbank hergestellt werden.");
@@ -325,7 +325,7 @@ public class User {
                 return;
             }
 
-            if(!EPattern.USERNAME.isMatch(query.get(EUser.NAME.toString()))) {
+            if(!EPattern.NAME.isMatch(query.get(EUser.NAME.toString()))) {
                 response.writeResponse(EMessages.WRONG_NAME);
                 return;
             }
@@ -336,8 +336,7 @@ public class User {
             }
 
             // Öffnen der Datenbank
-            try {
-                Session session = Azubiprojekt.getSqlPostgres().openSession();
+            try(Session session = Azubiprojekt.getSqlPostgres().openSession()) {
                 Query<APUser> queryUser = session.createNamedQuery("@HQL_GET_SEARCH_USER_NAME", APUser.class);
                 queryUser.setParameter("name", query.get(EUser.NAME.toString()));
 
