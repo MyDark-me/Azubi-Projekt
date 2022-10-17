@@ -15,7 +15,7 @@ public class Azubiprojekt {
     private static final Logger logger = LoggerFactory.getLogger(Azubiprojekt.class);
 
     public static void main(String[] args) throws IOException {
-        SentryLogger.start();
+        SentryLogger.startSentry();
         logger.info("Starting Azubiprojekt Server");
         HTTPServer.startServer();
         sqlPostgres = new SQLPostgres("localhost:5432", "postgres", "password", "azubiprojekt");

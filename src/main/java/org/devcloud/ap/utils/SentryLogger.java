@@ -9,10 +9,6 @@ import oshi.hardware.HardwareAbstractionLayer;
 
 public class SentryLogger {
     public static void startSentry(){
-        start();
-    }
-    
-    private static void start(){
         Sentry.init(options -> {
             options.setDsn("https://79dd0ad84c08424ca57f89c81578de3a@o1145510.ingest.sentry.io/4503984812130304");
             options.setEnableExternalConfiguration(true);
