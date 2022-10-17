@@ -1,4 +1,4 @@
-package org.devcloud.ap.utils.helper;
+package org.devcloud.ap.utils.apihelper;
 
 import com.sun.net.httpserver.HttpExchange;
 import lombok.Getter;
@@ -7,16 +7,16 @@ import lombok.Setter;
 import org.devcloud.ap.Azubiprojekt;
 import org.devcloud.ap.database.enumeration.EUser;
 import org.devcloud.ap.database.enumeration.pattern.EPattern;
-import org.devcloud.ap.utils.helper.exeption.WrongInputException;
+import org.devcloud.ap.utils.apihelper.exeption.WrongInputException;
 import org.slf4j.Logger;
 
 import java.util.Map;
 
 public class InputHelper {
     @Getter
-    private Response response;
+    private final Response response;
     @Getter
-    private Map<String, String> queryMap;
+    private final Map<String, String> queryMap;
     @Getter @Setter
     private boolean called;
 

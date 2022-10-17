@@ -1,4 +1,4 @@
-package org.devcloud.ap.utils.helper;
+package org.devcloud.ap.utils.apihelper;
 
 public interface ResponseMessage {
     int getRCode();

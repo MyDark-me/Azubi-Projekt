@@ -1,4 +1,4 @@
-package org.devcloud.ap.utils.helper.exeption;
+package org.devcloud.ap.utils.apihelper.exeption;
 
 public class WrongInputException extends Exception {
     public WrongInputException(String errorMessage) {

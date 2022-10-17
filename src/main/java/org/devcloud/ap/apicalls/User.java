@@ -7,10 +7,14 @@ import org.devcloud.ap.Azubiprojekt;
 import org.devcloud.ap.database.APUser;
 import org.devcloud.ap.database.enumeration.EUser;
 import org.devcloud.ap.database.enumeration.pattern.EPattern;
-import org.devcloud.ap.lang.ApiCallsLang;
 import org.devcloud.ap.utils.JSONCreator;
-import org.devcloud.ap.utils.helper.Response;
-import org.devcloud.ap.utils.helper.ResponseMessage;
+import org.devcloud.ap.utils.apihelper.InputHelper;
+import org.devcloud.ap.utils.apihelper.Response;
+import org.devcloud.ap.utils.apihelper.ResponseMessage;
+import org.devcloud.ap.utils.apihelper.databsehelper.UserDatabaseHelper;
+import org.devcloud.ap.utils.apihelper.exeption.DatabaseException;
+import org.devcloud.ap.utils.apihelper.exeption.NoResultException;
+import org.devcloud.ap.utils.apihelper.exeption.WrongInputException;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
@@ -23,6 +27,7 @@ import java.util.HashMap;
 
 
 public class User {
+    private User() {}
     private static final Logger logger = LoggerFactory.getLogger(User.class);
 
     public static void register(HttpServer httpServer) {
@@ -81,83 +86,23 @@ public class User {
 
         @Override
         public void handle(HttpExchange httpExchange) {
-            Response response = new Response(logger, httpExchange);
-            response.addResponseHeaders().debugRequest();
-
-            if(!Azubiprojekt.getSqlPostgres().isConnection()) {
-                response.writeResponse(EMessages.DATABASE_NOT_AVAILABLE);
+            InputHelper inputHelper = new InputHelper(logger, httpExchange);
+            try {
+                inputHelper.checkConnection();
+                inputHelper.checkUserName();
+                inputHelper.checkUserPassword();
+                inputHelper.checkUserEMail();
+            } catch (WrongInputException e) {
+                e.printStackTrace();
                 return;
             }
 
-            // Prüfen ob die URL Parameter vorhanden sind
-
-            HashMap<String, String> query = response.getEntities();
-            if(query.isEmpty()) {
-                response.writeResponse(EMessages.NO_INFORMATION);
-                return;
-            }
-
-            if(!query.containsKey(EUser.NAME.toString()) || !query.containsKey(EUser.PASSWORD.toString()) || !query.containsKey(EUser.EMAIL.toString())) {
-                response.writeResponse(EMessages.WRONG_INFORMATION);
-                return;
-            }
-
-            if(!EPattern.NAME.isMatch(query.get(EUser.NAME.toString()))) {
-                response.writeResponse(EMessages.WRONG_NAME);
-                return;
-            }
-
-            if(!EPattern.PASSWORD.isMatch(query.get(EUser.PASSWORD.toString()))) {
-                response.writeResponse(EMessages.WRONG_PASSWORD);
-                return;
-            }
-
-            if(!EPattern.EMAIL.isMatch(query.get(EUser.EMAIL.toString()))) {
-                response.writeResponse(EMessages.WRONG_EMAIL);
-                return;
-            }
-
-            // Öffnen der Datenbank
-
-            try(Session session = Azubiprojekt.getSqlPostgres().openSession()) {
-
-                // Prüfen ob der Benutzer schon existiert
-                Query<Long> queryUser = session.createNamedQuery("@HQL_GET_SEARCH_USER_COUNT", Long.class);
-                queryUser.setParameter("name", query.get(EUser.NAME.toString()));
-                Long count = queryUser.uniqueResult();
-
-                logger.debug("Es wurden {} Users gefunden.", count);
-                if(count > 0) {
-                    response.writeResponse(EMessages.ALREADY_NAME_USE);
-                    return;
-                }
-
-                // Ersellen des Benutzers
-                String randomToken = createToken();
-                APUser apUser = new APUser(
-                        query.get(EUser.NAME.toString()),
-                        query.get(EUser.PASSWORD.toString()),
-                        query.get(EUser.EMAIL.toString()),
-                        randomToken);
-
-                // Adden des Benutzers in die Datenbank
-                session.beginTransaction();
-
-                session.persist(apUser);
-
-                session.getTransaction().commit();
-                session.close();
-                logger.debug("ID {} wurde mit dem User {} erfolgreich erstellt.", apUser.getId(), apUser.getName());
-
-                JSONCreator jsonCreator = new JSONCreator();
-                jsonCreator.put(EUser.NAME.toString(), apUser.getName());
-                jsonCreator.put(EUser.EMAIL.toString(), apUser.getEmail());
-                jsonCreator.put(EUser.TOKEN.toString(), apUser.getToken());
-
-                response.writeResponse(jsonCreator);
-            } catch (HibernateException ex) {
-                logger.error("Fehler bei einer Datenbanksitzung", ex);
-                response.writeResponse(EMessages.INTERNAL_SERVER_ERROR);
+            UserDatabaseHelper databaseHelper = new UserDatabaseHelper(inputHelper);
+            try {
+                databaseHelper.checkUserExist(true);
+                databaseHelper.addUser();
+            } catch (DatabaseException | NoResultException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -165,52 +110,21 @@ public class User {
     private static class Delete implements HttpHandler {
         @Override
         public void handle(HttpExchange httpExchange) {
-            Response response = new Response(logger, httpExchange);
-            response.addResponseHeaders().debugRequest();
-
-            if(!Azubiprojekt.getSqlPostgres().isConnection()) {
-                response.writeResponse(EMessages.DATABASE_NOT_AVAILABLE);
+            InputHelper inputHelper = new InputHelper(logger, httpExchange);
+            try {
+                inputHelper.checkConnection();
+                inputHelper.checkUserToken();
+            } catch (WrongInputException e) {
+                e.printStackTrace();
                 return;
             }
 
-            // Prüfen ob die URL Parameter vorhanden sind
-            HashMap<String, String> query = response.getEntities();
-            if(query.isEmpty()) {
-                response.writeResponse(EMessages.NO_INFORMATION);
-                return;
-            }
-            if(!query.containsKey(EUser.TOKEN.toString())) {
-                response.writeResponse(EMessages.WRONG_INFORMATION);
-                return;
-            }
-
-            // Öffnen der Datenbank
-            try(Session session = Azubiprojekt.getSqlPostgres().openSession()) {
-
-                Query<APUser> queryUser = session.createNamedQuery("@HQL_GET_SEARCH_USER_TOKEN", APUser.class);
-                queryUser.setParameter("token", query.get(EUser.TOKEN.toString()));
-
-                if(queryUser.list().isEmpty()) {
-                    session.close();
-                    response.writeResponse(EMessages.TOKEN_NOT_VALID);
-                    return;
-                }
-
-                APUser apUser = queryUser.uniqueResult();
-                logger.debug("Es wurde der User {} gefunden.", apUser.getName());
-
-                session.beginTransaction();
-
-                session.remove(apUser);
-                session.getTransaction().commit();
-                logger.debug("Der Benutzer dem den token {} gehört hatte wurde gelöscht.", query.get(ApiCallsLang.TOKEN));
-                session.close();
-
-                response.writeResponse(EMessages.USER_DELETED);
-
-            } catch (HibernateException ex) {
-                logger.error("Fehler bei einer Datenbanksitzung", ex);
-                response.writeResponse(EMessages.INTERNAL_SERVER_ERROR);
+            UserDatabaseHelper databaseHelper = new UserDatabaseHelper(inputHelper);
+            try {
+                databaseHelper.checkUserExist(false);
+                databaseHelper.removeUser();
+            } catch (DatabaseException | NoResultException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -218,85 +132,24 @@ public class User {
     private static class Edit implements HttpHandler {
         @Override
         public void handle(HttpExchange httpExchange) {
-            Response response = new Response(logger, httpExchange);
-            response.addResponseHeaders().debugRequest();
-
-            if(!Azubiprojekt.getSqlPostgres().isConnection()) {
-                response.writeResponse(EMessages.DATABASE_NOT_AVAILABLE);
-                return;
-            }
-
-            // Prüfen ob die URL Parameter vorhanden sind
-            HashMap<String, String> query = response.getEntities();
-            if(query.isEmpty()) {
-                response.writeResponse(EMessages.NO_INFORMATION);
-                return;
-            }
-
-            if(!query.containsKey(EUser.NAME.toString()) || !query.containsKey(EUser.PASSWORD.toString()) || !query.containsKey(EUser.EMAIL.toString())) {
-                response.writeResponse(EMessages.WRONG_INFORMATION);
-                return;
-            }
-
-            if(!EPattern.NAME.isMatch(query.get(EUser.NAME.toString()))) {
-                response.writeResponse(EMessages.WRONG_NAME);
-                return;
-            }
-
-            if(!EPattern.PASSWORD.isMatch(query.get(EUser.PASSWORD.toString()))) {
-                response.writeResponse(EMessages.WRONG_PASSWORD);
-                return;
-            }
-
-            if(!EPattern.EMAIL.isMatch(query.get(EUser.EMAIL.toString()))) {
-                response.writeResponse(EMessages.WRONG_EMAIL);
-                return;
-            }
-
-            // Öffnen der Datenbank
-            try(Session session = Azubiprojekt.getSqlPostgres().openSession()) {
-                Query<APUser> queryUser = session.createNamedQuery("@HQL_GET_SEARCH_USER_NAME", APUser.class);
-                queryUser.setParameter("name", query.get(EUser.NAME.toString()));
-
-                if(queryUser.list().isEmpty()) {
-                    session.close();
-                    response.writeResponse(EMessages.WRONG_LOGIN);
-                    return;
-                }
-
-                APUser apUser = queryUser.uniqueResult();
-                logger.debug("Es wurde der User {} gefunden.", apUser.getName());
-
-                // Passwort prüfen
-                if(!query.get(EUser.PASSWORD.toString()).equals(apUser.getPassword())) {
-                    session.close();
-                    response.writeResponse(EMessages.WRONG_LOGIN);
-                }
-
-                // new random token
-                String randomToken = createToken();
-                apUser.setToken(randomToken);
-                apUser.setName(query.get(EUser.NAME.toString()));
-                apUser.setPassword(query.get(EUser.PASSWORD.toString()));
-
-                session.beginTransaction();
-
-                session.merge(apUser);
-
-                session.getTransaction().commit();
-                logger.debug("ID {} wurde mit dem User {} ein neuer Token gesetzt und Informationen aktualisiert.", apUser.getId(), apUser.getName());
-                session.close();
-
-                JSONCreator jsonCreator = new JSONCreator();
-                jsonCreator.put(EUser.NAME.toString(), apUser.getName());
-                jsonCreator.put(EUser.EMAIL.toString(), apUser.getEmail());
-                jsonCreator.put(EUser.TOKEN.toString(), apUser.getToken());
-
-                response.writeResponse(jsonCreator);
-            } catch (HibernateException e) {
+            InputHelper inputHelper = new InputHelper(logger, httpExchange);
+            try {
+                inputHelper.checkConnection();
+                inputHelper.checkUserName();
+                inputHelper.checkUserPassword();
+                inputHelper.checkUserEMail();
+                inputHelper.checkUserToken();
+            } catch (WrongInputException e) {
                 e.printStackTrace();
-                logger.error("Es konnte keine Verbindung zur Datenbank hergestellt werden.");
-                response.writeResponse(EMessages.DATABASE_NOT_AVAILABLE);
+                return;
+            }
+
+            UserDatabaseHelper databaseHelper = new UserDatabaseHelper(inputHelper);
+            try {
+                databaseHelper.checkUserExist(true);
+                databaseHelper.editUser();
+            } catch (DatabaseException | NoResultException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -304,79 +157,21 @@ public class User {
     private static class Login implements HttpHandler {
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
-            Response response = new Response(logger, httpExchange);
-            response.addResponseHeaders().debugRequest();
-
-            if(!Azubiprojekt.getSqlPostgres().isConnection()) {
-                response.writeResponse(EMessages.DATABASE_NOT_AVAILABLE);
-                return;
-            }
-
-            // Prüfen ob die URL Parameter vorhanden sind
-
-            HashMap<String, String> query = response.getEntities();
-            if(query.isEmpty()) {
-                response.writeResponse(EMessages.NO_INFORMATION);
-                return;
-            }
-
-            if(!query.containsKey(EUser.NAME.toString()) || !query.containsKey(EUser.PASSWORD.toString())) {
-                response.writeResponse(EMessages.WRONG_INFORMATION);
-                return;
-            }
-
-            if(!EPattern.NAME.isMatch(query.get(EUser.NAME.toString()))) {
-                response.writeResponse(EMessages.WRONG_NAME);
-                return;
-            }
-
-            if(!EPattern.PASSWORD.isMatch(query.get(EUser.PASSWORD.toString()))) {
-                response.writeResponse(EMessages.WRONG_PASSWORD);
-                return;
-            }
-
-            // Öffnen der Datenbank
-            try(Session session = Azubiprojekt.getSqlPostgres().openSession()) {
-                Query<APUser> queryUser = session.createNamedQuery("@HQL_GET_SEARCH_USER_NAME", APUser.class);
-                queryUser.setParameter("name", query.get(EUser.NAME.toString()));
-
-                if(queryUser.list().isEmpty()) {
-                    session.close();
-                    response.writeResponse(EMessages.WRONG_LOGIN);
-                    return;
-                }
-
-                APUser apUser = queryUser.uniqueResult();
-                logger.debug("Es wurde der User {} gefunden.", apUser.getName());
-
-                // Passwort prüfen
-                if(!query.get(EUser.PASSWORD.toString()).equals(apUser.getPassword())) {
-                    session.close();
-                    response.writeResponse(EMessages.WRONG_LOGIN);
-                }
-
-                // new random token
-                String randomToken = createToken();
-                apUser.setToken(randomToken);
-
-                session.beginTransaction();
-
-                session.merge(apUser);
-
-                session.getTransaction().commit();
-                session.close();
-
-                JSONCreator jsonCreator = new JSONCreator();
-                jsonCreator.put(EUser.NAME.toString(), apUser.getName());
-                jsonCreator.put(EUser.EMAIL.toString(), apUser.getEmail());
-                jsonCreator.put(EUser.TOKEN.toString(), apUser.getToken());
-
-                response.writeResponse(jsonCreator);
-
-            } catch (HibernateException e) {
+            InputHelper inputHelper = new InputHelper(logger, httpExchange);
+            try {
+                inputHelper.checkConnection();
+                inputHelper.checkUserName();
+                inputHelper.checkUserPassword();
+            } catch (WrongInputException e) {
                 e.printStackTrace();
-                logger.error("Es konnte keine Verbindung zur Datenbank hergestellt werden.");
-                response.writeResponse(EMessages.DATABASE_NOT_AVAILABLE);
+                return;
+            }
+
+            UserDatabaseHelper databaseHelper = new UserDatabaseHelper(inputHelper);
+            try {
+                databaseHelper.loginUser();
+            } catch (DatabaseException | NoResultException e) {
+                e.printStackTrace();
             }
         }
     }
