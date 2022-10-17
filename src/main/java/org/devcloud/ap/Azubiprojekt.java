@@ -8,11 +8,9 @@ import org.devcloud.ap.utils.HTTPServer;
 import org.devcloud.ap.utils.SentryLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import io.sentry.Sentry;
 
 
 public class Azubiprojekt {
-
     @Getter static SQLPostgres sqlPostgres;
     private static final Logger logger = LoggerFactory.getLogger(Azubiprojekt.class);
 
@@ -21,6 +19,5 @@ public class Azubiprojekt {
         logger.info("Starting Azubiprojekt Server");
         HTTPServer.startServer();
         sqlPostgres = new SQLPostgres("localhost:5432", "postgres", "password", "azubiprojekt");
-
     }
 }
