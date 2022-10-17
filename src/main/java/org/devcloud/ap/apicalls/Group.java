@@ -33,6 +33,7 @@ public class Group {
                 e.printStackTrace();
                 return;
             }
+
             GroupDatabaseHelper databaseHelper = new GroupDatabaseHelper(inputHelper);
             try {
                 databaseHelper.checkGroupExist(true);
@@ -55,6 +56,7 @@ public class Group {
                 e.printStackTrace();
                 return;
             }
+
             GroupDatabaseHelper databaseHelper = new GroupDatabaseHelper(inputHelper);
             try {
                 databaseHelper.removeGroup();
@@ -75,6 +77,7 @@ public class Group {
                 e.printStackTrace();
                 return;
             }
+
             GroupDatabaseHelper databaseHelper = new GroupDatabaseHelper(inputHelper);
             try {
                 databaseHelper.fetchUsers();

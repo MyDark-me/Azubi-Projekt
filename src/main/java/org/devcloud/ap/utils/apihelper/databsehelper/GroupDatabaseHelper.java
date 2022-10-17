@@ -123,6 +123,7 @@ public class GroupDatabaseHelper extends DatabaseHelper {
 
         if(queryRole.list().isEmpty())  {
             this.getResponse().writeResponse(EMessages.ROLE_NOT_EXIST);
+            this.getInputHelper().setCalled(true);
             throw new DatabaseException(EMessages.ROLE_NOT_EXIST.getMessage());
         }
 
@@ -134,10 +135,11 @@ public class GroupDatabaseHelper extends DatabaseHelper {
 
     private APUser searchUserByToken(Session session) throws DatabaseException {
         Query<APUser> queryUser = session.createNamedQuery("@HQL_GET_SEARCH_USER_TOKEN", APUser.class);
-        queryUser.setParameter("token", getInputHelper().getUserToken());
+        queryUser.setParameter("token", this.getInputHelper().getUserToken());
 
         if(queryUser.list().isEmpty()) {
             this.getResponse().writeResponse(EMessages.TOKEN_INVALID);
+            this.getInputHelper().setCalled(true);
             throw new DatabaseException(EMessages.TOKEN_INVALID.getMessage());
         }
 
@@ -212,7 +214,7 @@ public class GroupDatabaseHelper extends DatabaseHelper {
             Query<APMember> queryMember = session.createNamedQuery("@HQL_GET_ALL_MEMBERS_GROUP", APMember.class);
             queryMember.setParameter("name", this.getInputHelper().getGroupName());
 
-            this.getLogger().debug("Lese member records von der Gruppe {}:{}", apGroup.getName(), apGroup.getId());
+            this.getLogger().debug("Lese Member records von der Gruppe {}:{}", apGroup.getName(), apGroup.getId());
             List<APMember> apMemberList = queryMember.list();
 
             ArrayList<String> memberNameList = new ArrayList<>();
@@ -225,7 +227,7 @@ public class GroupDatabaseHelper extends DatabaseHelper {
 
             this.getResponse().writeResponse(jsonCreator);
         } catch (HibernateException e) {
-            this.getLogger().error("Fehler beim Einloggen des Users.", e);
+            this.getLogger().error("Fehler beim Abfragen der Users in einer Guruppe.", e);
             this.getResponse().writeResponse(EMessages.INTERNAL_SERVER_ERROR);
             throw new DatabaseException(EMessages.INTERNAL_SERVER_ERROR.getMessage());
         }
