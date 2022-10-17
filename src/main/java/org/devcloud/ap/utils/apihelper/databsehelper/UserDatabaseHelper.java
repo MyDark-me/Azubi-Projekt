@@ -10,7 +10,6 @@ import org.devcloud.ap.utils.apihelper.InputHelper;
 import org.devcloud.ap.utils.apihelper.ResponseMessage;
 import org.devcloud.ap.utils.apihelper.Token;
 import org.devcloud.ap.utils.apihelper.exeption.DatabaseException;
-import org.devcloud.ap.utils.apihelper.exeption.NoResultException;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
@@ -22,12 +21,12 @@ public class UserDatabaseHelper extends DatabaseHelper {
     }
     @RequiredArgsConstructor
     private enum EMessages implements ResponseMessage {
-        LIST_EMPTY(500, "Die Result liste ist Leer!"),
-        USER_EXIST(500, "Der Benutzer existiert bereits!"),
-        USER_NOT_EXIST(500, "Der Benutzer existiert nicht!"),
+        LIST_EMPTY(400, "Die Result liste ist Leer!"),
+        USER_EXIST(400, "Der Benutzer existiert bereits!"),
+        USER_NOT_EXIST(400, "Der Benutzer existiert nicht!"),
         USER_REMOVED(201,"User wurde erfolgreich gelöscht!"),
-        USER_WRONG_USERNAME_PASSWORD_GENERAL(500, "Der Username oder das Passwort ist falsch."),
-        TOKEN_INVALID(500, "Der Token ist nicht gültig."),
+        USER_WRONG_USERNAME_PASSWORD_GENERAL(400, "Der Username oder das Passwort ist falsch."),
+        TOKEN_INVALID(400, "Der Token ist nicht gültig."),
         INTERNAL_SERVER_ERROR(500, "Internal Server Error");
 
         @Getter
@@ -38,10 +37,8 @@ public class UserDatabaseHelper extends DatabaseHelper {
 
     /**
      * @param throwByExist if true throw exception if user exist
-     * @throws NoResultException if user not exist
-     * @throws DatabaseException if database error
      */
-    public void checkUserExist(boolean throwByExist) throws NoResultException, DatabaseException {
+    public void checkUserExist(boolean throwByExist) throws DatabaseException {
         if(this.getInputHelper().isCalled()) return;
         try(Session session = Azubiprojekt.getSqlPostgres().openSession()) {
             Query<Long> queryUser = session.createNamedQuery("@HQL_GET_SEARCH_USER_COUNT", Long.class);
@@ -50,7 +47,7 @@ public class UserDatabaseHelper extends DatabaseHelper {
             if(queryUser.getResultList().isEmpty()) {
                 this.getInputHelper().getResponse().writeResponse(EMessages.LIST_EMPTY);
                 this.getInputHelper().setCalled(true);
-                throw new NoResultException(EMessages.LIST_EMPTY.getMessage());
+                throw new DatabaseException(EMessages.LIST_EMPTY.getMessage());
             }
 
             Long count = queryUser.uniqueResult();
@@ -67,7 +64,7 @@ public class UserDatabaseHelper extends DatabaseHelper {
                 if(count < 0) {
                     this.getResponse().writeResponse(EMessages.USER_NOT_EXIST);
                     this.getInputHelper().setCalled(true);
-                    throw new NoResultException(EMessages.USER_NOT_EXIST.getMessage());
+                    throw new DatabaseException(EMessages.USER_NOT_EXIST.getMessage());
                 }
             }
 
@@ -186,7 +183,7 @@ public class UserDatabaseHelper extends DatabaseHelper {
         this.getResponse().writeResponse(jsonCreator);
     }
 
-    public void loginUser() throws DatabaseException, NoResultException {
+    public void loginUser() throws DatabaseException {
         try(Session session = Azubiprojekt.getSqlPostgres().openSession()) {
             Query<APUser> queryUser = session.createNamedQuery("@HQL_GET_SEARCH_USER_NAME", APUser.class);
             queryUser.setParameter("name", getInputHelper().getUserName());
@@ -194,7 +191,7 @@ public class UserDatabaseHelper extends DatabaseHelper {
             if(queryUser.list().isEmpty()) {
                 this.getResponse().writeResponse(EMessages.USER_WRONG_USERNAME_PASSWORD_GENERAL);
                 this.getInputHelper().setCalled(true);
-                throw new NoResultException(EMessages.USER_WRONG_USERNAME_PASSWORD_GENERAL.getMessage());
+                throw new DatabaseException(EMessages.USER_WRONG_USERNAME_PASSWORD_GENERAL.getMessage());
             }
 
             APUser apUser = queryUser.uniqueResult();

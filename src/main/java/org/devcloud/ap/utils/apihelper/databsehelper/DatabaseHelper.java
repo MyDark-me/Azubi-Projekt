@@ -19,6 +19,4 @@ public class DatabaseHelper {
         return inputHelper.getResponse().getLogger();
     }
 
-
-
 }

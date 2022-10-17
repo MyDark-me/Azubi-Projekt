@@ -4,6 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public enum EPattern {
+    ID("^[0-9]*$"),
     /*
      * Name:
      * mindestens 3 zeichen

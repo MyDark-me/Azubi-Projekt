@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.devcloud.ap.Azubiprojekt;
+import org.devcloud.ap.database.enumeration.EGroup;
+import org.devcloud.ap.database.enumeration.ERole;
 import org.devcloud.ap.database.enumeration.EUser;
 import org.devcloud.ap.database.enumeration.pattern.EPattern;
 import org.devcloud.ap.utils.apihelper.exeption.WrongInputException;
@@ -53,6 +55,26 @@ public class InputHelper {
             this.called = true;
             throw new WrongInputException(EMessages.DATABASE_NOT_AVAILABLE.getMessage());
         }
+    }
+
+    // USER STUFF
+
+    public void checkUserID() throws WrongInputException {
+        if(this.called) return;
+        if(!this.queryMap.containsKey(EUser.ID.toString())) {
+            this.response.writeResponse(EMessages.MISSING_KEY);
+            this.called = true;
+            throw new WrongInputException(EMessages.MISSING_KEY.getMessage());
+        }
+        if(!EPattern.ID.isMatch(this.queryMap.get(EUser.ID.toString()))) {
+            this.response.writeResponse(EMessages.WRONG_KEY_PASSWORD);
+            this.called = true;
+            throw new WrongInputException(EMessages.WRONG_KEY_PASSWORD.getMessage());
+        }
+    }
+
+    public String getUserID()  {
+        return this.queryMap.get(EUser.ID.toString());
     }
 
     public void checkUserName() throws WrongInputException {
@@ -125,5 +147,117 @@ public class InputHelper {
 
     public String getUserToken()  {
         return this.queryMap.get(EUser.TOKEN.toString());
+    }
+
+    // GROUP STUFF
+
+    public void checkGroupID() throws WrongInputException {
+        if(this.called) return;
+        if(!this.queryMap.containsKey(EGroup.ID.toString())) {
+            this.response.writeResponse(EMessages.MISSING_KEY);
+            this.called = true;
+            throw new WrongInputException(EMessages.MISSING_KEY.getMessage());
+        }
+        if(!EPattern.NAME.isMatch(this.queryMap.get(EGroup.ID.toString()))) {
+            this.response.writeResponse(EMessages.WRONG_KEY_TOKEN);
+            this.called = true;
+            throw new WrongInputException(EMessages.WRONG_KEY_TOKEN.getMessage());
+        }
+    }
+
+    public String getGroupID()  {
+        return this.queryMap.get(EGroup.ID.toString());
+    }
+
+    public void checkGroupName() throws WrongInputException {
+        if(this.called) return;
+        if(!this.queryMap.containsKey(EGroup.NAME.toString())) {
+            this.response.writeResponse(EMessages.MISSING_KEY);
+            this.called = true;
+            throw new WrongInputException(EMessages.MISSING_KEY.getMessage());
+        }
+        if(!EPattern.NAME.isMatch(this.queryMap.get(EGroup.NAME.toString()))) {
+            this.response.writeResponse(EMessages.WRONG_KEY_TOKEN);
+            this.called = true;
+            throw new WrongInputException(EMessages.WRONG_KEY_TOKEN.getMessage());
+        }
+    }
+
+    public String getGroupName()  {
+        return this.queryMap.get(EGroup.NAME.toString());
+    }
+
+    public void checkGroupColor() throws WrongInputException {
+        if(this.called) return;
+        if(!this.queryMap.containsKey(EGroup.COLOR.toString())) {
+            this.response.writeResponse(EMessages.MISSING_KEY);
+            this.called = true;
+            throw new WrongInputException(EMessages.MISSING_KEY.getMessage());
+        }
+        if(!EPattern.NAME.isMatch(this.queryMap.get(EGroup.COLOR.toString()))) {
+            this.response.writeResponse(EMessages.WRONG_KEY_TOKEN);
+            this.called = true;
+            throw new WrongInputException(EMessages.WRONG_KEY_TOKEN.getMessage());
+        }
+    }
+
+    public String getGroupColor()  {
+        return this.queryMap.get(EGroup.COLOR.toString());
+    }
+
+    // ROLE STUFF
+
+    public void checkRoleID() throws WrongInputException {
+        if(this.called) return;
+        if(!this.queryMap.containsKey(ERole.ID.toString())) {
+            this.response.writeResponse(EMessages.MISSING_KEY);
+            this.called = true;
+            throw new WrongInputException(EMessages.MISSING_KEY.getMessage());
+        }
+        if(!EPattern.NAME.isMatch(this.queryMap.get(ERole.ID.toString()))) {
+            this.response.writeResponse(EMessages.WRONG_KEY_TOKEN);
+            this.called = true;
+            throw new WrongInputException(EMessages.WRONG_KEY_TOKEN.getMessage());
+        }
+    }
+
+    public String getRoleID()  {
+        return this.queryMap.get(ERole.ID.toString());
+    }
+
+    public void checkRoleName() throws WrongInputException {
+        if(this.called) return;
+        if(!this.queryMap.containsKey(ERole.NAME.toString())) {
+            this.response.writeResponse(EMessages.MISSING_KEY);
+            this.called = true;
+            throw new WrongInputException(EMessages.MISSING_KEY.getMessage());
+        }
+        if(!EPattern.NAME.isMatch(this.queryMap.get(ERole.NAME.toString()))) {
+            this.response.writeResponse(EMessages.WRONG_KEY_TOKEN);
+            this.called = true;
+            throw new WrongInputException(EMessages.WRONG_KEY_TOKEN.getMessage());
+        }
+    }
+
+    public String getRoleName()  {
+        return this.queryMap.get(ERole.NAME.toString());
+    }
+
+    public void checkRoleColor() throws WrongInputException {
+        if(this.called) return;
+        if(!this.queryMap.containsKey(ERole.COLOR.toString())) {
+            this.response.writeResponse(EMessages.MISSING_KEY);
+            this.called = true;
+            throw new WrongInputException(EMessages.MISSING_KEY.getMessage());
+        }
+        if(!EPattern.NAME.isMatch(this.queryMap.get(ERole.COLOR.toString()))) {
+            this.response.writeResponse(EMessages.WRONG_KEY_TOKEN);
+            this.called = true;
+            throw new WrongInputException(EMessages.WRONG_KEY_TOKEN.getMessage());
+        }
+    }
+
+    public String getRoleColor()  {
+        return this.queryMap.get(ERole.COLOR.toString());
     }
 }
