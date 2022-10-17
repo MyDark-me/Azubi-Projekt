@@ -8,7 +8,7 @@ import oshi.hardware.GlobalMemory;
 import oshi.hardware.HardwareAbstractionLayer;
 
 public class SentryLogger {
-    public void startSentry(){
+    public static void startSentry(){
         start();
     }
     
