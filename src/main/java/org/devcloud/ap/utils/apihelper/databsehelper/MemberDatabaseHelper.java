@@ -26,15 +26,11 @@ public class MemberDatabaseHelper extends DatabaseHelper {
     }
     @RequiredArgsConstructor
     private enum EMessages implements ResponseMessage {
-        LIST_EMPTY(400, "Die Result liste ist Leer!"),
-        GROUP_NOT_EXIST(400, "Die Gruppe existiert nicht!"),
-        TOKEN_INVALID(400, "Der Token ist nicht gültig."),
         MEMBER_SUCCESSFUL_JOINED(201, "Member ist erfolgreich der Gruppe beigetreten!"),
         MEMBER_SUCCESSFUL_LEAVED(201, "Member hat erfolgreich die Gruppe verliassen!"),
         MEMBER_SUCCESSFUL_EDITED(201, "Member hat erfolgreich bearbeitet!"),
         MEMBER_NOT_ACCESSED(400, "Du bist nicht Mitglied."),
         ROLE_NOT_ADMIN(400, "Du bist nicht Admin."),
-        ROLE_NOT_EXIST(400, "Die Rolle existiert nicht."),
         USER_NOT_EXIST(400, "Der Benutzer existiert nicht!"),
         INTERNAL_SERVER_ERROR(500, "Internal Server Error");
 
@@ -44,51 +40,24 @@ public class MemberDatabaseHelper extends DatabaseHelper {
         private final String message;
     }
 
+    private static final String ADMIN_GROUP = "Admin";
+
     public void joinGroup() throws DatabaseException {
         try(Session session = Azubiprojekt.getSqlPostgres().openSession()) {
-            // Hole Gruppe mit Namen
-            Query<APGroup> queryGroup = session.createNamedQuery("@HQL_GET_SEARCH_GROUP_NAME", APGroup.class);
-            queryGroup.setParameter("name", this.getInputHelper().getGroupName());
 
-            if(queryGroup.list().isEmpty()) {
-                this.getResponse().writeResponse(EMessages.GROUP_NOT_EXIST);
-                throw new DatabaseException(EMessages.GROUP_NOT_EXIST.getMessage());
-            }
+            APGroup apGroup = GroupDatabaseHelper.searchGroupByName(session, this);
+            APUser apUser = UserDatabaseHelper.searchUserByToken(session, this);
+            APMember apMember = searchMemberByUserGroup(session, this, apGroup, apUser);
 
-            APGroup apGroup = queryGroup.uniqueResult();
-
-            APUser apUser = searchUserByToken(session);
-
-            // Hole den Member mit der Gruppe und dem User
-            Query<APMember> queryMember = session.createNamedQuery("@HQL_GET_SEARCH_MEMBER_USER_GROUP", APMember.class);
-            queryMember.setParameter("user", apUser);
-            queryMember.setParameter("group", apGroup);
-
-            if(queryMember.list().isEmpty()) {
-                this.getResponse().writeResponse(EMessages.MEMBER_NOT_ACCESSED);
-                throw new DatabaseException(EMessages.MEMBER_NOT_ACCESSED.getMessage());
-            }
-
-            APMember apMember = queryMember.uniqueResult();
-
-            if(apMember.getRole().getName().equals("Admin")) {
+            if(apMember.getRole().getName().equals(ADMIN_GROUP)) {
                 this.getResponse().writeResponse(EMessages.ROLE_NOT_ADMIN);
                 this.getInputHelper().setCalled(true);
                 throw new DatabaseException(EMessages.ROLE_NOT_ADMIN.getMessage());
             }
 
-            // Hole den neuen Benutzer
-            Query<APUser> queryUser = session.createNamedQuery("@HQL_GET_SEARCH_USER_NAME", APUser.class);
-            queryUser.setParameter("name", this.getInputHelper().getUserName());
+            APUser apUserTarget = UserDatabaseHelper.searchUserByName(session, this);
 
-            if(queryUser.list().isEmpty()) {
-                this.getResponse().writeResponse(EMessages.USER_NOT_EXIST);
-                throw new DatabaseException(EMessages.USER_NOT_EXIST.getMessage());
-            }
-
-            APUser apUserTarget = queryUser.uniqueResult();
-
-            APRole apRole = searchRoleByName(session, "Member");
+            APRole apRole = RoleDatabaseHelper.searchRoleByName(session, this, "Member");
 
             // Erstelle den Member
 
@@ -105,6 +74,7 @@ public class MemberDatabaseHelper extends DatabaseHelper {
 
             this.getResponse().writeResponse(EMessages.MEMBER_SUCCESSFUL_JOINED);
         } catch (HibernateException e) {
+            e.printStackTrace();
             this.getLogger().error("Fehler beim Ersellen des Users.", e);
             this.getResponse().writeResponse(EMessages.INTERNAL_SERVER_ERROR);
             this.getInputHelper().setCalled(true);
@@ -112,38 +82,33 @@ public class MemberDatabaseHelper extends DatabaseHelper {
         }
     }
 
-    private APRole searchRoleByName(Session session, String member) throws HibernateException, DatabaseException {
-        // Hole Admin Role
-        Query<APRole> queryRole = session.createNamedQuery("@HQL_GET_SEARCH_ROLE_NAME", APRole.class);
-        queryRole.setParameter("name", member);
-
-        if(queryRole.list().isEmpty())  {
-            this.getResponse().writeResponse(EMessages.ROLE_NOT_EXIST);
-            this.getInputHelper().setCalled(true);
-            throw new DatabaseException(EMessages.ROLE_NOT_EXIST.getMessage());
-        }
-
-        return queryRole.uniqueResult();
-    }
-
-    private APUser searchUserByToken(Session session) throws DatabaseException {
-        Query<APUser> queryUser = session.createNamedQuery("@HQL_GET_SEARCH_USER_TOKEN", APUser.class);
-        queryUser.setParameter("token", this.getInputHelper().getUserToken());
-
-        if(queryUser.list().isEmpty()) {
-            this.getResponse().writeResponse(EMessages.TOKEN_INVALID);
-            this.getInputHelper().setCalled(true);
-            throw new DatabaseException(EMessages.TOKEN_INVALID.getMessage());
-        }
-
-        return queryUser.uniqueResult();
-    }
-
     public void leaveGroup() throws DatabaseException {
         try(Session session = Azubiprojekt.getSqlPostgres().openSession()) {
 
+            APGroup apGroup = GroupDatabaseHelper.searchGroupByName(session, this);
+
+            APUser apUserTarget = UserDatabaseHelper.searchUserByName(session, this);
+            APMember apMemberTarget = searchMemberByUserGroup(session, this, apGroup, apUserTarget);
+            APUser apUser = UserDatabaseHelper.searchUserByToken(session, this);
+
+            if(!apMemberTarget.getUser().equals(apUser)) {
+                APMember apMember = searchMemberByUserGroup(session, this, apGroup, apUser);
+
+                if(apMember.getRole().getName().equals(ADMIN_GROUP)) {
+                    this.getResponse().writeResponse(EMessages.ROLE_NOT_ADMIN);
+                    this.getInputHelper().setCalled(true);
+                    throw new DatabaseException(EMessages.ROLE_NOT_ADMIN.getMessage());
+                }
+            }
+
+            // Lösche Member
+            session.beginTransaction();
+            session.remove(apMemberTarget);
+            session.getTransaction().commit();
+
             this.getResponse().writeResponse(EMessages.MEMBER_SUCCESSFUL_LEAVED);
         } catch (HibernateException e) {
+            e.printStackTrace();
             this.getLogger().error("Fehler beim Löschen des Users.", e);
             this.getResponse().writeResponse(EMessages.INTERNAL_SERVER_ERROR);
             this.getInputHelper().setCalled(true);
@@ -154,66 +119,21 @@ public class MemberDatabaseHelper extends DatabaseHelper {
     public void editRole() throws DatabaseException {
         try(Session session = Azubiprojekt.getSqlPostgres().openSession()) {
 
-            // Hole Gruppe mit Namen
-            Query<APGroup> queryGroup = session.createNamedQuery("@HQL_GET_SEARCH_GROUP_NAME", APGroup.class);
-            queryGroup.setParameter("name", this.getInputHelper().getGroupName());
+            APGroup apGroup = GroupDatabaseHelper.searchGroupByName(session, this);
+            APUser apUser = UserDatabaseHelper.searchUserByName(session, this);
+            APMember apMember = searchMemberByUserGroup(session, this, apGroup, apUser);
 
-            if(queryGroup.list().isEmpty()) {
-                this.getResponse().writeResponse(EMessages.GROUP_NOT_EXIST);
-                this.getInputHelper().setCalled(true);
-                throw new DatabaseException(EMessages.GROUP_NOT_EXIST.getMessage());
-            }
-
-            APGroup apGroup = queryGroup.uniqueResult();
-
-            APUser apUser = searchUserByToken(session);
-
-            // Hole den Member mit der Gruppe und dem User
-            Query<APMember> queryMember = session.createNamedQuery("@HQL_GET_SEARCH_MEMBER_USER_GROUP", APMember.class);
-            queryMember.setParameter("user", apUser);
-            queryMember.setParameter("group", apGroup);
-
-            if(queryMember.list().isEmpty()) {
-                this.getResponse().writeResponse(EMessages.MEMBER_NOT_ACCESSED);
-                this.getInputHelper().setCalled(true);
-                throw new DatabaseException(EMessages.MEMBER_NOT_ACCESSED.getMessage());
-            }
-
-            APMember apMember = queryMember.uniqueResult();
-
-            if(apMember.getRole().getName().equals("Admin")) {
+            if(apMember.getRole().getName().equals(ADMIN_GROUP)) {
                 this.getResponse().writeResponse(EMessages.ROLE_NOT_ADMIN);
                 this.getInputHelper().setCalled(true);
                 throw new DatabaseException(EMessages.ROLE_NOT_ADMIN.getMessage());
             }
 
-            // Hole den Benuzter mit dem Namen
-            Query<APUser> queryUser = session.createNamedQuery("@HQL_GET_SEARCH_USER_NAME", APUser.class);
-            queryUser.setParameter("name", this.getInputHelper().getUserName());
-
-            if(queryUser.list().isEmpty()) {
-                this.getResponse().writeResponse(EMessages.USER_NOT_EXIST);
-                throw new DatabaseException(EMessages.USER_NOT_EXIST.getMessage());
-            }
-
-            APUser apUserTarget = queryUser.uniqueResult();
-
-            // Hole den Member mit der Gruppe und dem User
-            Query<APMember> queryMemberTarget = session.createNamedQuery("@HQL_GET_SEARCH_MEMBER_USER_GROUP", APMember.class);
-            queryMemberTarget.setParameter("user", apUserTarget);
-            queryMemberTarget.setParameter("group", apGroup);
-
-            if(queryMemberTarget.list().isEmpty()) {
-                this.getResponse().writeResponse(EMessages.MEMBER_NOT_ACCESSED);
-                this.getInputHelper().setCalled(true);
-                throw new DatabaseException(EMessages.MEMBER_NOT_ACCESSED.getMessage());
-            }
-
-            APMember apMemberTarget = queryMemberTarget.uniqueResult();
+            APUser apUserTarget = UserDatabaseHelper.searchUserByName(session, this);
+            APMember apMemberTarget = searchMemberByUserGroup(session, this, apGroup, apUserTarget);
 
             // Hole die neue Gruppe
-            APRole apRole = searchRoleByName(session, this.getInputHelper().getRoleName());
-
+            APRole apRole = RoleDatabaseHelper.searchRoleByName(session, this, this.getInputHelper().getRoleName());
             apMemberTarget.setRole(apRole);
 
             session.beginTransaction();
@@ -222,6 +142,7 @@ public class MemberDatabaseHelper extends DatabaseHelper {
 
             this.getResponse().writeResponse(EMessages.MEMBER_SUCCESSFUL_EDITED);
         } catch (HibernateException e) {
+            e.printStackTrace();
             this.getLogger().error("Fehler beim Löschen des Users.", e);
             this.getResponse().writeResponse(EMessages.INTERNAL_SERVER_ERROR);
             this.getInputHelper().setCalled(true);
@@ -231,18 +152,7 @@ public class MemberDatabaseHelper extends DatabaseHelper {
 
     public void fetchGroups() throws DatabaseException {
         try(Session session = Azubiprojekt.getSqlPostgres().openSession()) {
-            // Hole Group
-            Query<APGroup> queryGroup = session.createNamedQuery("@HQL_GET_SEARCH_GROUP_NAME", APGroup.class);
-            queryGroup.setParameter("name", this.getInputHelper().getGroupName());
-
-            if(queryGroup.list().isEmpty()) {
-                this.getResponse().writeResponse(EMessages.GROUP_NOT_EXIST);
-                this.getInputHelper().setCalled(true);
-                throw new DatabaseException(EMessages.GROUP_NOT_EXIST.getMessage());
-            }
-
-            APGroup apGroup = queryGroup.uniqueResult();
-            this.getLogger().debug("Es wurde die Gruppe {}:{} gefunden.", apGroup.getName(), apGroup.getId());
+            APGroup apGroup = GroupDatabaseHelper.searchGroupByName(session, this);
 
             // Hole User
             Query<APUser> userQuery = session.createNamedQuery("@HQL_GET_SEARCH_GROUP_NAME", APUser.class);
@@ -275,10 +185,25 @@ public class MemberDatabaseHelper extends DatabaseHelper {
 
             this.getResponse().writeResponse(jsonCreator);
         } catch (HibernateException e) {
+            e.printStackTrace();
             this.getLogger().error("Fehler beim Abfragen der Gruppen des Benutzers.", e);
             this.getResponse().writeResponse(EMessages.INTERNAL_SERVER_ERROR);
             throw new DatabaseException(EMessages.INTERNAL_SERVER_ERROR.getMessage());
         }
+    }
+
+    public static APMember searchMemberByUserGroup(Session session, DatabaseHelper databaseHelper, APGroup apGroup, APUser apUser) throws DatabaseException {
+        // Hole den Member mit der Gruppe und dem User
+        Query<APMember> queryMember = session.createNamedQuery("@HQL_GET_SEARCH_MEMBER_USER_GROUP", APMember.class);
+        queryMember.setParameter("user", apUser);
+        queryMember.setParameter("group", apGroup);
+
+        if(queryMember.list().isEmpty()) {
+            databaseHelper.getResponse().writeResponse(EMessages.MEMBER_NOT_ACCESSED);
+            databaseHelper.getInputHelper().setCalled(true);
+            throw new DatabaseException(EMessages.MEMBER_NOT_ACCESSED.getMessage());
+        }
+        return queryMember.uniqueResult();
     }
 
 }

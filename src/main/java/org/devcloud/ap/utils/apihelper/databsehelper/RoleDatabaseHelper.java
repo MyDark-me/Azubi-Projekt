@@ -23,6 +23,7 @@ public class RoleDatabaseHelper extends DatabaseHelper {
     }
     @RequiredArgsConstructor
     private enum EMessages implements ResponseMessage {
+        ROLE_NOT_EXIST(400, "Die Rolle existiert nicht."),
         INTERNAL_SERVER_ERROR(500, "Internal Server Error");
 
         @Getter
@@ -51,11 +52,26 @@ public class RoleDatabaseHelper extends DatabaseHelper {
 
             this.getResponse().writeResponse(jsonCreator);
         } catch (HibernateException e) {
+            e.printStackTrace();
             this.getLogger().error("Fehler beim Suchen des der Roles.", e);
             this.getResponse().writeResponse(EMessages.INTERNAL_SERVER_ERROR);
             this.getInputHelper().setCalled(true);
             throw new DatabaseException(EMessages.INTERNAL_SERVER_ERROR.getMessage());
         }
+    }
+
+    public static APRole searchRoleByName(Session session, DatabaseHelper databaseHelper, String member) throws HibernateException, DatabaseException {
+        // Hole Admin Role
+        Query<APRole> queryRole = session.createNamedQuery("@HQL_GET_SEARCH_ROLE_NAME", APRole.class);
+        queryRole.setParameter("name", member);
+
+        if(queryRole.list().isEmpty())  {
+            databaseHelper.getResponse().writeResponse(EMessages.ROLE_NOT_EXIST);
+            databaseHelper.getInputHelper().setCalled(true);
+            throw new DatabaseException(EMessages.ROLE_NOT_EXIST.getMessage());
+        }
+
+        return queryRole.uniqueResult();
     }
 
 }
