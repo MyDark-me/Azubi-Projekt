@@ -3,9 +3,9 @@ package org.devcloud.ap.database.enumeration;
 public enum EUser {
     ID("userID"),
     NAME("userName"),
-    PASSWORD("password"),
-    EMAIL("email"),
-    TOKEN("token");
+    PASSWORD("userPassword"),
+    EMAIL("userEmail"),
+    TOKEN("userToken");
 
     final String name;
 

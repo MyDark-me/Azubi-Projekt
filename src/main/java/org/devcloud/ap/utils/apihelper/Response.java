@@ -24,7 +24,7 @@ public class Response {
 
     public void debugRequest() {
         URI requestURI = httpExchange.getRequestURI();
-        logger.debug("{} - was requested", requestURI);
+        this.logger.debug("{} - was requested", requestURI);
     }
 
     public void addResponseHeaders() {
@@ -34,24 +34,24 @@ public class Response {
 
     public Map<String, String> getEntities() {
         Map<String, String> feedback = new HashMap<>();
-        URI requestURI = httpExchange.getRequestURI();
+        URI requestURI = this.httpExchange.getRequestURI();
         String query = requestURI.getQuery();
         if (query == null) {
-            logger.debug("Nichts gefunden in der Liste");
+            this.logger.debug("Nichts gefunden in der Liste");
             return feedback;
         }
 
         String[] list = query.split("&");
-        logger.debug("Länge der gefundenen Liste {}", list.length);
+        this.logger.debug("Länge der gefundenen Liste {}", list.length);
 
         for (String raw : list) {
             String[] splitter = raw.split("=");
             if(splitter.length == 2) {
-                logger.debug("Schlüssel {} mit Wert {} gefunden", splitter[0], splitter[1]);
-                feedback.put(splitter[0], splitter[1]);
+                this.logger.debug("Schlüssel {} mit Wert {} gefunden", splitter[0], splitter[1]);
+                feedback.put(splitter[0].toLowerCase(), splitter[1]);
             }
             else
-                logger.debug("Kein Schlüssel und Wert gefunden!");
+                this.logger.debug("Kein Schlüssel und Wert gefunden!");
 
         }
         return feedback;
@@ -69,14 +69,14 @@ public class Response {
 
     public void writeResponse(int rCode, String response) {
         try {
-            httpExchange.sendResponseHeaders(rCode, response.length());
+            this.httpExchange.sendResponseHeaders(rCode, response.length());
 
-            OutputStream outputStream = httpExchange.getResponseBody();
+            OutputStream outputStream = this.httpExchange.getResponseBody();
             for(char write : response.toCharArray())
                 outputStream.write(write);
             outputStream.close();
         } catch (IOException e) {
-            logger.error("Fehler beim Schreiben der Antwort", e);
+            this.logger.error("Fehler beim Schreiben der Antwort", e);
             Sentry.captureException(e);
         }
     }

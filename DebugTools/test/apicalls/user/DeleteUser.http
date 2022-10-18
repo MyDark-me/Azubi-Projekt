@@ -1,1 +1,1 @@
-GET http://localhost:8001/api/user/delete?token=TOKEN
+GET http://localhost:8001/api/user/delete?userToken=TOKEN

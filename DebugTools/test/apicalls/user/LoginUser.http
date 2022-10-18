@@ -1,1 +1,1 @@
-GET http://localhost:8001/api/user/login?username=IchBinCool&password=CoolesPasswort
+GET http://localhost:8001/api/user/login?username=IchBinCool&userPassword=CoolesPasswort
