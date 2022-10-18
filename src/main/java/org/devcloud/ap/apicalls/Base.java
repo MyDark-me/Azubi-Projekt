@@ -14,8 +14,9 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 public class Base {
-    private Base() {}
     private static final Logger logger = LoggerFactory.getLogger(Base.class);
+
+    private Base() {}
 
     public static void register(HttpServer httpServer) {
         httpServer.createContext("/api/check", new Check());

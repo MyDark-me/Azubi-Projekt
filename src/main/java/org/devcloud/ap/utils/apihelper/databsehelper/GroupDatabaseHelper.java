@@ -1,6 +1,7 @@
 package org.devcloud.ap.utils.apihelper.databsehelper;
 
 import com.google.gson.Gson;
+import io.sentry.Sentry;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.devcloud.ap.Azubiprojekt;
@@ -76,6 +77,7 @@ public class GroupDatabaseHelper extends DatabaseHelper {
 
         } catch (HibernateException e) {
             this.getLogger().error("Fehler beim Suchen der Gruppe.", e);
+            Sentry.captureException(e);
             this.getResponse().writeResponse(EMessages.INTERNAL_SERVER_ERROR);
             this.getInputHelper().setCalled(true);
             throw new DatabaseException(EMessages.INTERNAL_SERVER_ERROR.getMessage());
@@ -106,8 +108,8 @@ public class GroupDatabaseHelper extends DatabaseHelper {
 
             this.getResponse().writeResponse(EMessages.GROUP_SUCCESSFUL_CREATED);
         } catch (HibernateException e) {
-            e.printStackTrace();
             this.getLogger().error("Fehler beim Ersellen des Users.", e);
+            Sentry.captureException(e);
             this.getResponse().writeResponse(EMessages.INTERNAL_SERVER_ERROR);
             this.getInputHelper().setCalled(true);
             throw new DatabaseException(EMessages.INTERNAL_SERVER_ERROR.getMessage());
@@ -147,8 +149,8 @@ public class GroupDatabaseHelper extends DatabaseHelper {
             this.getResponse().writeResponse(EMessages.GROUP_SUCCESSFUL_REMOVED);
 
         } catch (HibernateException e) {
-            e.printStackTrace();
             this.getLogger().error("Fehler beim Löschen des Users.", e);
+            Sentry.captureException(e);
             this.getResponse().writeResponse(EMessages.INTERNAL_SERVER_ERROR);
             this.getInputHelper().setCalled(true);
             throw new DatabaseException(EMessages.INTERNAL_SERVER_ERROR.getMessage());
@@ -185,8 +187,8 @@ public class GroupDatabaseHelper extends DatabaseHelper {
 
             this.getResponse().writeResponse(jsonCreator);
         } catch (HibernateException e) {
-            e.printStackTrace();
             this.getLogger().error("Fehler beim Abfragen der Users in einer Guruppe.", e);
+            Sentry.captureException(e);
             this.getResponse().writeResponse(EMessages.INTERNAL_SERVER_ERROR);
             throw new DatabaseException(EMessages.INTERNAL_SERVER_ERROR.getMessage());
         }

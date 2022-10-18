@@ -11,8 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Group {
-    private Group() {}
     private static final Logger logger = LoggerFactory.getLogger(Group.class);
+
+    private Group() {}
 
     public static void register(HttpServer httpServer) {
         httpServer.createContext("/api/group/create", new Create());

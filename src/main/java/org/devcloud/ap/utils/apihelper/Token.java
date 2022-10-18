@@ -1,11 +1,9 @@
 package org.devcloud.ap.utils.apihelper;
 
-import lombok.NoArgsConstructor;
-
 import java.security.SecureRandom;
 
-@NoArgsConstructor
 public class Token {
+    private Token() {}
     private static final String TOKEN_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
     public static String getRandomToken() {

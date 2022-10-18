@@ -8,6 +8,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.sentry.Sentry;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.devcloud.ap.utils.JSONCreator;
@@ -74,6 +75,7 @@ public class Response {
             outputStream.close();
         } catch (IOException e) {
             logger.error("Fehler beim Schreiben der Antwort", e);
+            Sentry.captureException(e);
         }
     }
 }

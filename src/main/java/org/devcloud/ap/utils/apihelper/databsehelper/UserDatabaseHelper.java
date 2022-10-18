@@ -1,5 +1,6 @@
 package org.devcloud.ap.utils.apihelper.databsehelper;
 
+import io.sentry.Sentry;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.devcloud.ap.Azubiprojekt;
@@ -69,8 +70,8 @@ public class UserDatabaseHelper extends DatabaseHelper {
             }
 
         } catch (HibernateException e) {
-            e.printStackTrace();
             this.getLogger().error("Fehler beim Suchen des Users.", e);
+            Sentry.captureException(e);
             this.getResponse().writeResponse(EMessages.INTERNAL_SERVER_ERROR);
             this.getInputHelper().setCalled(true);
             throw new DatabaseException(EMessages.INTERNAL_SERVER_ERROR.getMessage());
@@ -102,8 +103,8 @@ public class UserDatabaseHelper extends DatabaseHelper {
 
             this.getResponse().writeResponse(jsonCreator);
         } catch (HibernateException e) {
-            e.printStackTrace();
             this.getLogger().error("Fehler beim Ersellen des Users.", e);
+            Sentry.captureException(e);
             this.getResponse().writeResponse(EMessages.INTERNAL_SERVER_ERROR);
             this.getInputHelper().setCalled(true);
             throw new DatabaseException(EMessages.INTERNAL_SERVER_ERROR.getMessage());
@@ -121,8 +122,8 @@ public class UserDatabaseHelper extends DatabaseHelper {
 
             this.getResponse().writeResponse(EMessages.USER_REMOVED);
         } catch (HibernateException e) {
-            e.printStackTrace();
             this.getLogger().error("Fehler beim Löschen des Users.", e);
+            Sentry.captureException(e);
             this.getResponse().writeResponse(EMessages.INTERNAL_SERVER_ERROR);
             this.getInputHelper().setCalled(true);
             throw new DatabaseException(EMessages.INTERNAL_SERVER_ERROR.getMessage());
@@ -153,8 +154,8 @@ public class UserDatabaseHelper extends DatabaseHelper {
             sendUserData(session, apUser);
 
         } catch (HibernateException e) {
-            e.printStackTrace();
             this.getLogger().error("Fehler beim Bearbeiten des Users.", e);
+            Sentry.captureException(e);
             this.getResponse().writeResponse(EMessages.INTERNAL_SERVER_ERROR);
             this.getInputHelper().setCalled(true);
             throw new DatabaseException(EMessages.INTERNAL_SERVER_ERROR.getMessage());
@@ -218,8 +219,8 @@ public class UserDatabaseHelper extends DatabaseHelper {
             this.getLogger().debug("Benutzer {}:{} wurde erfolgreich eingeloggt.", apUser.getName(), apUser.getId());
             sendUserData(session, apUser);
         } catch (HibernateException e) {
-            e.printStackTrace();
             this.getLogger().error("Fehler beim Einloggen des Users.", e);
+            Sentry.captureException(e);
             this.getResponse().writeResponse(EMessages.INTERNAL_SERVER_ERROR);
             throw new DatabaseException(EMessages.INTERNAL_SERVER_ERROR.getMessage());
         }

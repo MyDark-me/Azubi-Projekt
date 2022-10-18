@@ -36,9 +36,9 @@ public enum EPattern {
     @Override
     public String toString() {return aPattern; }
 
-    public boolean isMatch(CharSequence input) {
+    public boolean isMatching(CharSequence input) {
         Pattern pattern = Pattern.compile(aPattern);
         Matcher matcher = pattern.matcher(input);
-        return matcher.find();
+        return !matcher.find();
     }
 }

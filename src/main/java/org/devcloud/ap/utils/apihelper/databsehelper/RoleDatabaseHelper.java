@@ -1,6 +1,7 @@
 package org.devcloud.ap.utils.apihelper.databsehelper;
 
 import com.google.gson.Gson;
+import io.sentry.Sentry;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.devcloud.ap.Azubiprojekt;
@@ -12,7 +13,9 @@ import org.devcloud.ap.utils.apihelper.exeption.DatabaseException;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.query.Query;
+import org.slf4j.Logger;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -52,8 +55,8 @@ public class RoleDatabaseHelper extends DatabaseHelper {
 
             this.getResponse().writeResponse(jsonCreator);
         } catch (HibernateException e) {
-            e.printStackTrace();
             this.getLogger().error("Fehler beim Suchen des der Roles.", e);
+            Sentry.captureException(e);
             this.getResponse().writeResponse(EMessages.INTERNAL_SERVER_ERROR);
             this.getInputHelper().setCalled(true);
             throw new DatabaseException(EMessages.INTERNAL_SERVER_ERROR.getMessage());
@@ -72,6 +75,46 @@ public class RoleDatabaseHelper extends DatabaseHelper {
         }
 
         return queryRole.uniqueResult();
+    }
+
+    public static void autoCreate(Logger logger) {
+        if(!Azubiprojekt.getSqlPostgres().isConnection()) return;
+
+        try {
+            Session session = Azubiprojekt.getSqlPostgres().openSession();
+
+            logger.debug("Erstelle rollen falls nötig!");
+            Query<APRole> queryRole = session.createNamedQuery("@HQL_GET_ALL_ROLES", APRole.class);
+            List<APRole> apRoles = queryRole.list();
+            logger.debug("Lese Role records...");
+
+            List<String> pgRolesName = new ArrayList<>();
+            apRoles.forEach(pgRole -> pgRolesName.add(pgRole.getName()));
+
+            session.beginTransaction();
+
+            if(!pgRolesName.contains("Member")) {
+                APRole memberRole = new APRole("Member", "GRAY");
+                session.persist(memberRole);
+                logger.debug("Role Member wird erstellt");
+            }
+            if(!pgRolesName.contains("Mod")) {
+                APRole moderatorRole = new APRole("Mod", "BLUE");
+                session.persist(moderatorRole);
+                logger.debug("Role Mod wird erstellt");
+            }
+            if(!pgRolesName.contains("Admin")) {
+                APRole administratorRole = new APRole("Admin", "RED");
+                session.persist(administratorRole);
+                logger.debug("Role Admin wird erstellt");
+            }
+
+            session.getTransaction().commit();
+
+            session.close();
+        } catch (HibernateException e) {
+            Sentry.captureException(e);
+        }
     }
 
 }

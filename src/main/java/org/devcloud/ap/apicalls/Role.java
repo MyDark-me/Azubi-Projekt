@@ -11,12 +11,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Role {
-    private Role() {}
     private static final Logger logger = LoggerFactory.getLogger(Role.class);
 
     public static void register(HttpServer httpServer) {
         httpServer.createContext("/api/role/roles", new Roles());
     }
+
+    private Role() {}
 
     private static class Roles implements HttpHandler {
 

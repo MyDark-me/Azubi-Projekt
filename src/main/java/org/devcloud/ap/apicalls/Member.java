@@ -11,8 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Member {
-
     private static final Logger logger = LoggerFactory.getLogger(Member.class);
+
+    private Member() {}
 
     public static void register(HttpServer httpServer) {
         httpServer.createContext("/api/member/join", new Join());

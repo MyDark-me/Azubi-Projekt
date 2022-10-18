@@ -66,7 +66,7 @@ public class InputHelper {
             this.called = true;
             throw new WrongInputException(EMessages.MISSING_KEY.getMessage());
         }
-        if(!EPattern.ID.isMatch(this.queryMap.get(EUser.ID.toString()))) {
+        if(EPattern.ID.isMatching(this.queryMap.get(EUser.ID.toString()))) {
             this.response.writeResponse(EMessages.WRONG_KEY_PASSWORD);
             this.called = true;
             throw new WrongInputException(EMessages.WRONG_KEY_PASSWORD.getMessage());
@@ -84,7 +84,7 @@ public class InputHelper {
             this.called = true;
             throw new WrongInputException(EMessages.MISSING_KEY.getMessage());
         }
-        if(!EPattern.NAME.isMatch(this.queryMap.get(EUser.NAME.toString()))) {
+        if(EPattern.NAME.isMatching(this.queryMap.get(EUser.NAME.toString()))) {
             this.response.writeResponse(EMessages.WRONG_KEY_NAME);
             this.called = true;
             throw new WrongInputException(EMessages.WRONG_KEY_NAME.getMessage());
@@ -102,7 +102,7 @@ public class InputHelper {
             this.called = true;
             throw new WrongInputException(EMessages.MISSING_KEY.getMessage());
         }
-        if(!EPattern.PASSWORD.isMatch(this.queryMap.get(EUser.PASSWORD.toString()))) {
+        if(EPattern.PASSWORD.isMatching(this.queryMap.get(EUser.PASSWORD.toString()))) {
             this.response.writeResponse(EMessages.WRONG_KEY_PASSWORD);
             this.called = true;
             throw new WrongInputException(EMessages.WRONG_KEY_PASSWORD.getMessage());
@@ -120,7 +120,7 @@ public class InputHelper {
             this.called = true;
             throw new WrongInputException(EMessages.MISSING_KEY.getMessage());
         }
-        if(!EPattern.EMAIL.isMatch(this.queryMap.get(EUser.EMAIL.toString()))) {
+        if(EPattern.EMAIL.isMatching(this.queryMap.get(EUser.EMAIL.toString()))) {
             this.response.writeResponse(EMessages.WRONG_KEY_EMAIL);
             this.called = true;
             throw new WrongInputException(EMessages.WRONG_KEY_EMAIL.getMessage());
@@ -138,7 +138,7 @@ public class InputHelper {
             this.called = true;
             throw new WrongInputException(EMessages.MISSING_KEY.getMessage());
         }
-        if(!EPattern.TOKEN.isMatch(this.queryMap.get(EUser.TOKEN.toString()))) {
+        if(EPattern.TOKEN.isMatching(this.queryMap.get(EUser.TOKEN.toString()))) {
             this.response.writeResponse(EMessages.WRONG_KEY_TOKEN);
             this.called = true;
             throw new WrongInputException(EMessages.WRONG_KEY_TOKEN.getMessage());
@@ -158,7 +158,7 @@ public class InputHelper {
             this.called = true;
             throw new WrongInputException(EMessages.MISSING_KEY.getMessage());
         }
-        if(!EPattern.NAME.isMatch(this.queryMap.get(EGroup.ID.toString()))) {
+        if(EPattern.NAME.isMatching(this.queryMap.get(EGroup.ID.toString()))) {
             this.response.writeResponse(EMessages.WRONG_KEY_TOKEN);
             this.called = true;
             throw new WrongInputException(EMessages.WRONG_KEY_TOKEN.getMessage());
@@ -176,7 +176,7 @@ public class InputHelper {
             this.called = true;
             throw new WrongInputException(EMessages.MISSING_KEY.getMessage());
         }
-        if(!EPattern.NAME.isMatch(this.queryMap.get(EGroup.NAME.toString()))) {
+        if(EPattern.NAME.isMatching(this.queryMap.get(EGroup.NAME.toString()))) {
             this.response.writeResponse(EMessages.WRONG_KEY_TOKEN);
             this.called = true;
             throw new WrongInputException(EMessages.WRONG_KEY_TOKEN.getMessage());
@@ -194,7 +194,7 @@ public class InputHelper {
             this.called = true;
             throw new WrongInputException(EMessages.MISSING_KEY.getMessage());
         }
-        if(!EPattern.NAME.isMatch(this.queryMap.get(EGroup.COLOR.toString()))) {
+        if(EPattern.NAME.isMatching(this.queryMap.get(EGroup.COLOR.toString()))) {
             this.response.writeResponse(EMessages.WRONG_KEY_TOKEN);
             this.called = true;
             throw new WrongInputException(EMessages.WRONG_KEY_TOKEN.getMessage());
@@ -214,7 +214,7 @@ public class InputHelper {
             this.called = true;
             throw new WrongInputException(EMessages.MISSING_KEY.getMessage());
         }
-        if(!EPattern.NAME.isMatch(this.queryMap.get(ERole.ID.toString()))) {
+        if(EPattern.NAME.isMatching(this.queryMap.get(ERole.ID.toString()))) {
             this.response.writeResponse(EMessages.WRONG_KEY_TOKEN);
             this.called = true;
             throw new WrongInputException(EMessages.WRONG_KEY_TOKEN.getMessage());
@@ -232,7 +232,7 @@ public class InputHelper {
             this.called = true;
             throw new WrongInputException(EMessages.MISSING_KEY.getMessage());
         }
-        if(!EPattern.NAME.isMatch(this.queryMap.get(ERole.NAME.toString()))) {
+        if(EPattern.NAME.isMatching(this.queryMap.get(ERole.NAME.toString()))) {
             this.response.writeResponse(EMessages.WRONG_KEY_TOKEN);
             this.called = true;
             throw new WrongInputException(EMessages.WRONG_KEY_TOKEN.getMessage());
@@ -250,7 +250,7 @@ public class InputHelper {
             this.called = true;
             throw new WrongInputException(EMessages.MISSING_KEY.getMessage());
         }
-        if(!EPattern.NAME.isMatch(this.queryMap.get(ERole.COLOR.toString()))) {
+        if(EPattern.NAME.isMatching(this.queryMap.get(ERole.COLOR.toString()))) {
             this.response.writeResponse(EMessages.WRONG_KEY_TOKEN);
             this.called = true;
             throw new WrongInputException(EMessages.WRONG_KEY_TOKEN.getMessage());

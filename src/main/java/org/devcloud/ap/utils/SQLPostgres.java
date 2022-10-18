@@ -35,11 +35,10 @@ public class SQLPostgres {
             ).buildMetadata().buildSessionFactory();
             logger.info("SQL: SessionFactory wurde Erstellt");
             this.connection = true;
-        } catch (Exception exception) {
+        } catch (Exception e) {
             logger.error("SQL: SessionFactory konnte nicht erstellt werden. Error: ");
-            exception.printStackTrace();
-            this.connection = false;
             Sentry.captureException(e);
+            this.connection = false;
         }
     }
 

@@ -10,10 +10,10 @@ import org.devcloud.ap.utils.apihelper.exeption.WrongInputException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 public class User {
-    private User() {}
     private static final Logger logger = LoggerFactory.getLogger(User.class);
+
+    private User() {}
 
     public static void register(HttpServer httpServer) {
         httpServer.createContext("/api/user/create", new Create());
