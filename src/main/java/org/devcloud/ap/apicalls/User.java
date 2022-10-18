@@ -86,7 +86,7 @@ public class User {
 
             UserDatabaseHelper databaseHelper = new UserDatabaseHelper(inputHelper);
             try {
-                databaseHelper.checkUserExist(true);
+                databaseHelper.checkUserExist(false);
                 databaseHelper.editUser();
             } catch (DatabaseException e) {
                 e.printStackTrace();

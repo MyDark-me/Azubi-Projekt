@@ -62,7 +62,9 @@ public class Response {
     }
 
     public void writeResponse(ResponseMessage response) {
-        writeResponse(response.getRCode(), response.getMessage());
+        JSONCreator jsonCreator = new JSONCreator();
+        jsonCreator.put("message", response.getMessage());
+        writeResponse(response.getRCode(), jsonCreator.toString());
     }
 
     public void writeResponse(int rCode, String response) {

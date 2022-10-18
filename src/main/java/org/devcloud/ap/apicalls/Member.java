@@ -70,7 +70,7 @@ public class Member {
             InputHelper inputHelper = new InputHelper(logger, httpExchange);
             try {
                 inputHelper.checkConnection();
-                inputHelper.checkGroupName();
+                inputHelper.checkUserName();
             } catch (WrongInputException e) {
                 e.printStackTrace();
                 return;

@@ -51,7 +51,7 @@ public class Group {
             InputHelper inputHelper = new InputHelper(logger, httpExchange);
             try {
                 inputHelper.checkConnection();
-                inputHelper.checkUserName();
+                inputHelper.checkGroupName();
                 inputHelper.checkUserToken();
             } catch (WrongInputException e) {
                 e.printStackTrace();

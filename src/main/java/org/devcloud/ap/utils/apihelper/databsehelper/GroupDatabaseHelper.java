@@ -141,7 +141,11 @@ public class GroupDatabaseHelper extends DatabaseHelper {
             }
 
             session.beginTransaction();
-
+            // Lösche Mitglieder
+            for (APMember rawMembers : MemberDatabaseHelper.getGroupMemberOfGroupName(session, this, apGroup)) {
+                session.remove(rawMembers);
+            }
+            // Lösche Gruppe
             session.remove(apGroup);
             session.getTransaction().commit();
             this.getLogger().debug("Die Gruppe {}:{} wurde gelöscht.", apGroup.getName(), apGroup.getId());
@@ -159,26 +163,11 @@ public class GroupDatabaseHelper extends DatabaseHelper {
 
     public void fetchUsers() throws DatabaseException {
         try(Session session = Azubiprojekt.getSqlPostgres().openSession()) {
-            Query<APGroup> queryGroup = session.createNamedQuery("@HQL_GET_SEARCH_GROUP_NAME", APGroup.class);
-            queryGroup.setParameter("name", this.getInputHelper().getGroupName());
 
-            if(queryGroup.list().isEmpty()) {
-                this.getResponse().writeResponse(EMessages.GROUP_NOT_EXIST);
-                this.getInputHelper().setCalled(true);
-                throw new DatabaseException(EMessages.GROUP_NOT_EXIST.getMessage());
-            }
-
-            APGroup apGroup = queryGroup.uniqueResult();
-            this.getLogger().debug("Es wurde die Gruppe {}:{} gefunden.", apGroup.getName(), apGroup.getId());
-
-            Query<APMember> queryMember = session.createNamedQuery("@HQL_GET_ALL_MEMBERS_GROUP", APMember.class);
-            queryMember.setParameter("name", this.getInputHelper().getGroupName());
-
-            this.getLogger().debug("Lese Member records von der Gruppe {}:{}", apGroup.getName(), apGroup.getId());
-            List<APMember> apMemberList = queryMember.list();
+            APGroup apGroup = searchGroupByName(session, this);
 
             ArrayList<String> memberNameList = new ArrayList<>();
-            for (APMember rawMembers : apMemberList) {
+            for (APMember rawMembers : MemberDatabaseHelper.getGroupMemberOfGroupName(session, this, apGroup)) {
                 memberNameList.add(rawMembers.getUser().getName());
             }
 

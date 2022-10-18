@@ -153,36 +153,29 @@ public class MemberDatabaseHelper extends DatabaseHelper {
 
     public void fetchGroups() throws DatabaseException {
         try(Session session = Azubiprojekt.getSqlPostgres().openSession()) {
-            APGroup apGroup = GroupDatabaseHelper.searchGroupByName(session, this);
-
-            // Hole User
-            Query<APUser> userQuery = session.createNamedQuery("@HQL_GET_SEARCH_GROUP_NAME", APUser.class);
-            userQuery.setParameter("name", this.getInputHelper().getGroupName());
-
-            if(userQuery.list().isEmpty()) {
-                this.getResponse().writeResponse(EMessages.USER_NOT_EXIST);
-                this.getInputHelper().setCalled(true);
-                throw new DatabaseException(EMessages.USER_NOT_EXIST.getMessage());
-            }
-
-            APUser apUser = userQuery.uniqueResult();
-            this.getLogger().debug("Es wurde der User {}:{} gefunden.", apUser.getName(), apUser.getId());
+            APUser apUser = UserDatabaseHelper.searchUserByName(session, this);
 
             // Hole joined Member
-            Query<APMember> queryMember = session.createNamedQuery("@HQL_GET_SEARCH_MEMBER_USER_GROUP", APMember.class);
-            queryMember.setParameter("group", apGroup);
-            queryMember.setParameter("user", apUser);
+            Query<APMember> queryMembers = session.createNamedQuery("@HQL_GET_ALL_MEMBERS_USER", APMember.class);
+            queryMembers.setParameter("user", apUser);
+
+            if(queryMembers.list().isEmpty()) {
+                this.getResponse().writeResponse(EMessages.INTERNAL_SERVER_ERROR);
+                this.getInputHelper().setCalled(true);
+                throw new DatabaseException(EMessages.INTERNAL_SERVER_ERROR.getMessage());
+            }
+
+            List<APMember> apMembers = queryMembers.list();
 
             this.getLogger().debug("Lese Group records von dem Benutzer {}:{}", apUser.getName(), apUser.getId());
-            List<APMember> apMemberList = queryMember.list();
 
-            ArrayList<String> memberNameList = new ArrayList<>();
-            for (APMember rawMembers : apMemberList) {
-                memberNameList.add(rawMembers.getGroup().getName());
+            ArrayList<String> groupNameList = new ArrayList<>();
+            for (APMember rawMember : apMembers) {
+                groupNameList.add(rawMember.getGroup().getName());
             }
 
             JSONCreator jsonCreator = new JSONCreator();
-            jsonCreator.put("groups", new Gson().toJson(memberNameList));
+            jsonCreator.put("groups", new Gson().toJson(groupNameList));
 
             this.getResponse().writeResponse(jsonCreator);
         } catch (HibernateException e) {
@@ -205,6 +198,20 @@ public class MemberDatabaseHelper extends DatabaseHelper {
             throw new DatabaseException(EMessages.MEMBER_NOT_ACCESSED.getMessage());
         }
         return queryMember.uniqueResult();
+    }
+
+    public static List<APMember> getGroupMemberOfGroupName(Session session, DatabaseHelper databaseHelper, APGroup apGroup) throws DatabaseException {
+        Query<APMember> queryMember = session.createNamedQuery("@HQL_GET_ALL_MEMBERS_GROUP", APMember.class);
+        queryMember.setParameter("group", apGroup);
+
+        if(queryMember.list().isEmpty()) {
+            databaseHelper.getResponse().writeResponse(EMessages.INTERNAL_SERVER_ERROR);
+            databaseHelper.getInputHelper().setCalled(true);
+            throw new DatabaseException(EMessages.INTERNAL_SERVER_ERROR.getMessage());
+        }
+
+        databaseHelper.getLogger().debug("Lese Member records von der Gruppe {}:{}", apGroup.getName(), apGroup.getId());
+        return queryMember.list();
     }
 
 }

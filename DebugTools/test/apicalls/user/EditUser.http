@@ -1,0 +1,1 @@
+GET http://localhost:8001/api/user/edit?username=IchBinCool&password=CoolesPasswort&email=newMail@mail.de&token=TOKEN

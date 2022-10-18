@@ -1,5 +1,6 @@
 package org.devcloud.ap;
 
+import io.sentry.Sentry;
 import lombok.Getter;
 import org.devcloud.ap.utils.SQLPostgres;
 
@@ -22,8 +23,8 @@ public class Azubiprojekt {
         logger.info("Starting Azubiprojekt Server");
         try {
             HTTPServer.startServer();
-        } catch (IOException exception) {
-            exception.printStackTrace();
+        } catch (IOException e) {
+            Sentry.captureException(e);
         }
         sqlPostgres = new SQLPostgres("localhost:5432", "postgres", "password", "azubiprojekt");
         RoleDatabaseHelper.autoCreate(logger);

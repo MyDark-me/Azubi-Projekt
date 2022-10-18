@@ -1,7 +1,7 @@
 package org.devcloud.ap.database.enumeration;
 
 public enum ERole {
-    ID("id"),
+    ID("roleID"),
     NAME("name"),
     COLOR("color");
 

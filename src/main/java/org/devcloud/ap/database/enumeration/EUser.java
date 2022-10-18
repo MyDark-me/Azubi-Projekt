@@ -1,7 +1,7 @@
 package org.devcloud.ap.database.enumeration;
 
 public enum EUser {
-    ID("id"),
+    ID("userID"),
     NAME("userName"),
     PASSWORD("password"),
     EMAIL("email"),

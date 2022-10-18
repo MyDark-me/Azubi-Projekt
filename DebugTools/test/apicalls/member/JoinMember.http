@@ -1,0 +1,1 @@
+GET http://localhost:8001/api/member/join?username=IchBinCool&name=CooleGruppe&token=TOKEN
