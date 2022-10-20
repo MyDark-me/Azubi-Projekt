@@ -75,10 +75,56 @@ public class User {
             InputHelper inputHelper = new InputHelper(logger, httpExchange);
             try {
                 inputHelper.checkConnection();
-                inputHelper.checkUserName();
-                inputHelper.checkUserPassword();
-                inputHelper.checkUserEMail();
                 inputHelper.checkUserToken();
+
+                // Hier werden die Eingaben überprüft von drei möglichen Eingaben
+                // 1. Username Passwort Email
+                // 2. Username Passwort
+                // 3. Username Email
+                // 4. Passwort Email
+                // 5. Username
+                // 6. Passwort
+                // 7. Email
+
+                // Prüfe ob der Username, Passwort und E-Mail Adresse geändert werden soll
+                if(inputHelper.isUserName() && inputHelper.isUserPassword() && inputHelper.isUserEMail()) {
+                    inputHelper.checkUserName();
+                    inputHelper.checkUserPassword();
+                    inputHelper.checkUserEMail();
+                }
+
+                // Prüfe ob der Username und Passwort geändert werden soll
+                else if(inputHelper.isUserName() && inputHelper.isUserPassword()) {
+                    inputHelper.checkUserName();
+                    inputHelper.checkUserPassword();
+                }
+
+                // Prüfe ob der Username und E-Mail Adresse geändert werden soll
+                else if(inputHelper.isUserName() && inputHelper.isUserEMail()) {
+                    inputHelper.checkUserName();
+                    inputHelper.checkUserEMail();
+                }
+
+                // Prüfe ob das Passwort und die E-Mail Adresse geändert werden soll
+                else if(inputHelper.isUserPassword() && inputHelper.isUserEMail()) {
+                    inputHelper.checkUserPassword();
+                    inputHelper.checkUserEMail();
+                }
+
+                // Prüfe ob der Username geändert werden soll
+                else if(inputHelper.isUserName()) {
+                    inputHelper.checkUserName();
+                }
+
+                // Prüfe ob das Passwort geändert werden soll
+                else if(inputHelper.isUserPassword()) {
+                    inputHelper.checkUserPassword();
+                }
+
+                // Prüfe ob die E-Mail Adresse geändert werden soll
+                else if(inputHelper.isUserEMail()) {
+                    inputHelper.checkUserEMail();
+                }
             } catch (WrongInputException e) {
                 e.printStackTrace();
                 return;

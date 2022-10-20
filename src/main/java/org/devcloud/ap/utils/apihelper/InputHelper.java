@@ -73,6 +73,9 @@ public class InputHelper {
         }
     }
 
+    public Boolean isUserID()  {
+        return this.queryMap.containsKey(EUser.ID.toString());
+    }
     public String getUserID()  {
         return this.queryMap.get(EUser.ID.toString());
     }
@@ -91,6 +94,9 @@ public class InputHelper {
         }
     }
 
+    public Boolean isUserName()  {
+        return this.queryMap.containsKey(EUser.NAME.toString());
+    }
     public String getUserName()  {
         return this.queryMap.get(EUser.NAME.toString());
     }
@@ -109,6 +115,9 @@ public class InputHelper {
         }
     }
 
+    public Boolean isUserPassword()  {
+        return this.queryMap.containsKey(EUser.PASSWORD.toString());
+    }
     public String getUserPassword()  {
         return this.queryMap.get(EUser.PASSWORD.toString());
     }
@@ -127,6 +136,9 @@ public class InputHelper {
         }
     }
 
+    public Boolean isUserEMail()  {
+        return this.queryMap.containsKey(EUser.EMAIL.toString());
+    }
     public String getUserEMail()  {
         return this.queryMap.get(EUser.EMAIL.toString());
     }
@@ -145,6 +157,9 @@ public class InputHelper {
         }
     }
 
+    public Boolean isUserToken()  {
+        return this.queryMap.containsKey(EUser.TOKEN.toString());
+    }
     public String getUserToken()  {
         return this.queryMap.get(EUser.TOKEN.toString());
     }
@@ -165,6 +180,9 @@ public class InputHelper {
         }
     }
 
+    public Boolean isGroupID()  {
+        return this.queryMap.containsKey(EGroup.ID.toString());
+    }
     public String getGroupID()  {
         return this.queryMap.get(EGroup.ID.toString());
     }
@@ -183,6 +201,9 @@ public class InputHelper {
         }
     }
 
+    public Boolean isGroupName()  {
+        return this.queryMap.containsKey(EGroup.NAME.toString());
+    }
     public String getGroupName()  {
         return this.queryMap.get(EGroup.NAME.toString());
     }
@@ -201,6 +222,9 @@ public class InputHelper {
         }
     }
 
+    public Boolean isGroupColor()  {
+        return this.queryMap.containsKey(EGroup.COLOR.toString());
+    }
     public String getGroupColor()  {
         return this.queryMap.get(EGroup.COLOR.toString());
     }
@@ -221,6 +245,9 @@ public class InputHelper {
         }
     }
 
+    public Boolean isRoleID()  {
+        return this.queryMap.containsKey(ERole.ID.toString());
+    }
     public String getRoleID()  {
         return this.queryMap.get(ERole.ID.toString());
     }
@@ -239,6 +266,9 @@ public class InputHelper {
         }
     }
 
+    public Boolean isRoleName()  {
+        return this.queryMap.containsKey(ERole.NAME.toString());
+    }
     public String getRoleName()  {
         return this.queryMap.get(ERole.NAME.toString());
     }
@@ -257,6 +287,9 @@ public class InputHelper {
         }
     }
 
+    public Boolean isRoleColor()  {
+        return this.queryMap.containsKey(ERole.COLOR.toString());
+    }
     public String getRoleColor()  {
         return this.queryMap.get(ERole.COLOR.toString());
     }
