@@ -12,9 +12,9 @@
         <property name="hibernate.show_sql">true</property>
         <property name="hibernate.hbm2ddl.auto">update</property>
 
-        <mapping class="org.devcloud.ap.database.PgUser"/>
-        <mapping class="org.devcloud.ap.database.PgGroup"/>
-        <mapping class="org.devcloud.ap.database.PgRole"/>
-        <mapping class="org.devcloud.ap.database.PgMember"/>
+        <mapping class="org.devcloud.ap.database.APUser"/>
+        <mapping class="org.devcloud.ap.database.APGroup"/>
+        <mapping class="org.devcloud.ap.database.APRole"/>
+        <mapping class="org.devcloud.ap.database.APMember"/>
     </session-factory>
 </hibernate-configuration>

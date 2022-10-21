@@ -1,0 +1,1 @@
+GET http://localhost:8001/api/group/create?groupName=CooleGruppe&groupColor=Red&userToken=TOKEN

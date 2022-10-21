@@ -2,6 +2,7 @@ package org.devcloud.ap.utils;
 
 import io.sentry.Sentry;
 import lombok.Getter;
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
@@ -12,8 +13,9 @@ import org.slf4j.LoggerFactory;
 
 public class SQLPostgres {
 
-    Logger logger = LoggerFactory.getLogger(SQLPostgres.class);
+    static Logger logger = LoggerFactory.getLogger(SQLPostgres.class);
     @Getter SessionFactory sessionFactory;
+    @Getter boolean connection;
 
     public SQLPostgres(String host, String user, String password, String database) {
         String url = "jdbc:postgresql://%host%/%database%?ApplicationName=azubiprojekt";
@@ -32,13 +34,15 @@ public class SQLPostgres {
                     standardServiceRegistryBuilder.build()
             ).buildMetadata().buildSessionFactory();
             logger.info("SQL: SessionFactory wurde Erstellt");
+            this.connection = true;
         } catch (Exception e) {
             logger.error("SQL: SessionFactory konnte nicht erstellt werden. Error: ");
             Sentry.captureException(e);
+            this.connection = false;
         }
     }
 
-    public Session openSession() {
+    public Session openSession() throws HibernateException {
         return this.sessionFactory.openSession();
     }
 

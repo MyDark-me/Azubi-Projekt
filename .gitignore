@@ -37,5 +37,6 @@ build/
 
 
 /dependency-reduced-pom.xml
-
 logs/
+#Only Debugshit
+src/test
