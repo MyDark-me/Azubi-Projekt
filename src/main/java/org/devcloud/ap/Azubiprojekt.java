@@ -9,6 +9,7 @@ import java.io.IOException;
 import org.devcloud.ap.utils.HTTPServer;
 import org.devcloud.ap.utils.apihelper.databsehelper.RoleDatabaseHelper;
 import org.devcloud.ap.utils.SentryLogger;
+import org.devcloud.ap.utils.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,13 +21,15 @@ public class Azubiprojekt {
     
     public static void main(String[] args) {
         SentryLogger.startSentry();
+        Config config = new Config();
+        config.initConfig();
         logger.info("Starting Azubiprojekt Server");
         try {
             HTTPServer.startServer();
         } catch (IOException e) {
             Sentry.captureException(e);
         }
-        sqlPostgres = new SQLPostgres("localhost:5432", "postgres", "password", "azubiprojekt");
+        sqlPostgres = new SQLPostgres("81.169.168.24:5433", "postgres", "superpasswort", "azubiprojekt");
         RoleDatabaseHelper.autoCreate(logger);
     }
 }
