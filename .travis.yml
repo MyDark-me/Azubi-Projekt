@@ -1,0 +1,4 @@
+language: java
+jdk: openjdk17
+script: 
+ - wget https://github.com/sormuras/bach/raw/master/install-jdk.sh && . ./install-jdk.sh -F 17 -L GPL
