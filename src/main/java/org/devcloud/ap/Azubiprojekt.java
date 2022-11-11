@@ -16,20 +16,22 @@ import org.slf4j.LoggerFactory;
 
 public class Azubiprojekt {
 
-    @Getter static SQLPostgres sqlPostgres;
+    @Getter
+    static SQLPostgres sqlPostgres;
     private static final Logger logger = LoggerFactory.getLogger(Azubiprojekt.class);
-    
+
     public static void main(String[] args) {
         SentryLogger.startSentry();
         Config config = new Config();
         config.initConfig();
+
         logger.info("Starting Azubiprojekt Server");
         try {
             HTTPServer.startServer();
         } catch (IOException e) {
             Sentry.captureException(e);
         }
-        sqlPostgres = new SQLPostgres("81.169.168.24:5433", "postgres", "superpasswort", "azubiprojekt");
+        sqlPostgres = new SQLPostgres(config.dbhost+":"+config.dbport, config.dbuser, config.dbpass, config.dbtable);
         RoleDatabaseHelper.autoCreate(logger);
     }
 }
