@@ -5,8 +5,14 @@ import javafx.fxml.FXML;
 import javafx.scene.chart.AreaChart;
 import javafx.scene.control.*;
 import org.devcloud.ap.utils.OperatingSystemInfo;
+import org.devcloud.ap.utils.SQLPostgres;
 
+import java.io.*;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PanelController {
     // Statistik
@@ -33,6 +39,21 @@ public class PanelController {
     public void update() {
         update1();
         update2();
+
+        statistikTextarea.setText("Starting Capture of Console Output");
+
+        outputStreamForOut = new ByteArrayOutputStream();
+        outputStreamForErr = new ByteArrayOutputStream();
+
+        consoleCaptorForOut = new PrintStream(outputStreamForOut);
+        consoleCaptorForErr = new PrintStream(outputStreamForErr);
+
+        System.setOut(consoleCaptorForOut);
+        System.setErr(consoleCaptorForErr);
+
+        //System.out.println("Test");
+
+        captureConsoleOutput();
     }
 
     /**
@@ -68,6 +89,43 @@ public class PanelController {
         configTextFieldDatabaseTable.setText(table);
     }
 
+    private static final PrintStream originalOut = System.out;
+    private static final PrintStream originalErr = System.err;
+
+    private ByteArrayOutputStream outputStreamForOut;
+    private ByteArrayOutputStream outputStreamForErr;
+    private PrintStream consoleCaptorForOut;
+    private PrintStream consoleCaptorForErr;
+
+    private List<String> getContent(ByteArrayOutputStream outputStream) {
+        return Stream.of(outputStream.toString().split(System.lineSeparator()))
+                .map(String::trim)
+                .filter(line -> !line.isEmpty())
+                .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+    }
+
+    @ITimerTask(delay = 1, period = 1)
+    public void captureConsoleOutput() {
+        // See https://github.com/Hakky54/console-captor/blob/master/src/main/java/nl/altindag/console/ConsoleCaptor.java
+        try {
+            for (String line : getContent(outputStreamForOut)) {
+                statistikTextarea.appendText(line + System.lineSeparator());
+            }
+
+            outputStreamForOut.flush();
+            consoleCaptorForOut.flush();
+
+            outputStreamForOut.close();
+            outputStreamForErr.close();
+
+            consoleCaptorForOut.close();
+            consoleCaptorForErr.close();
+
+            System.setOut(consoleCaptorForOut);
+            System.setErr(consoleCaptorForErr);
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
     @FXML public void configButtonSpeichernAction(ActionEvent actionEvent) {
         actionEvent.getEventType();
         String host = configTextFieldDatabaseHost.getText();
@@ -77,15 +135,27 @@ public class PanelController {
         String table = configTextFieldDatabaseTable.getText();
 
         // TODO: Speichern
-        statistikTextarea.setText("Host: " + host);
-        statistikTextarea.appendText("Port: " + port);
-        statistikTextarea.appendText("User: " + user);
-        statistikTextarea.appendText("Password: " + password);
-        statistikTextarea.appendText("Table: " + table);
+        statistikTextarea.setText("Host: " + host + "\n");
+        statistikTextarea.appendText("Port: " + port + "\n");
+        statistikTextarea.appendText("User: " + user + "\n");
+        statistikTextarea.appendText("Password: " + "********" + "\n");
+        statistikTextarea.appendText("Table: " + table + "\n");
     }
 
     @FXML public void configButtonDatabaseTestAction(ActionEvent actionEvent) {
         actionEvent.getEventType();
-        // TODO: Testen ob die Datenbank erreichbar ist
+        String host = configTextFieldDatabaseHost.getText();
+        String port = configTextFieldDatabasePort.getText();
+        String user = configTextFieldDatabaseUser.getText();
+        String password = configTextFieldDatabasePassword.getText();
+        String table = configTextFieldDatabaseTable.getText();
+
+        var sqlPostgres = new SQLPostgres(host + ":" + port, user, password, table);
+
+        if(sqlPostgres.isConnection()) {
+            statistikTextarea.setText("Verbindung erfolgreich");
+        } else {
+            statistikTextarea.setText("Verbindung fehlgeschlagen");
+        }
     }
 }
