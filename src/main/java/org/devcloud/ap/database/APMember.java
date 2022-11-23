@@ -21,18 +21,18 @@ public class APMember implements Serializable {
     @Id
     @GenericGenerator(name = "generator", strategy = "increment")
     @GeneratedValue(generator = "generator")
-    @Column
+    @Column(name = "apmember_id", nullable = false)
     Integer id;
 
     @OneToOne
-    @JoinColumn(nullable = false)
+    @JoinColumn(name = "apmember_user", nullable = false)
     @NonNull APUser user;
 
     @OneToOne
-    @JoinColumn(nullable = false)
+    @JoinColumn(name = "apmember_group", nullable = false)
     @NonNull APGroup group;
 
     @OneToOne
-    @JoinColumn(nullable = false)
+    @JoinColumn(name = "apmember_role", nullable = false)
     @NonNull APRole role;
 }

@@ -20,12 +20,12 @@ public class APGroup implements Serializable {
     @GenericGenerator(name = "generator", strategy = "increment")
     @Id
     @GeneratedValue(generator = "generator")
-    @Column(nullable = false)
+    @Column(name = "apgroup_id", nullable = false)
     Integer id;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "apgroup_name", unique = true, nullable = false)
     @NonNull String name;
 
-    @Column(nullable = false)
+    @Column(name = "apgroup_color",nullable = false)
     @NonNull String color;
 }

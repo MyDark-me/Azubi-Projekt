@@ -19,12 +19,12 @@ public class APRole implements Serializable {
     @GenericGenerator(name = "generator", strategy = "increment")
     @Id
     @GeneratedValue(generator = "generator")
-    @Column(nullable = false)
+    @Column(name = "aprole_id", nullable = false)
     Integer id;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "aprole_name", unique = true, nullable = false)
     @NonNull String name;
 
-    @Column(nullable = false)
+    @Column(name = "aprole_color", nullable = false)
     @NonNull String color;
 }

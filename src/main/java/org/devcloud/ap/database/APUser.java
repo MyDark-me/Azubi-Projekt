@@ -21,18 +21,18 @@ public class APUser implements Serializable {
     @GenericGenerator(name = "generator", strategy = "increment")
     @Id
     @GeneratedValue(generator = "generator")
-    @Column(nullable = false)
+    @Column(name = "apuser_id", nullable = false)
     Integer id;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "apuser_name", unique = true, nullable = false)
     @NonNull String name;
 
-    @Column(nullable = false)
+    @Column(name = "apuser_password", nullable = false)
     @NonNull String password;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "apuser_email", unique = true, nullable = false)
     @NonNull String email;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "apuser_token", unique = true, nullable = false)
     @NonNull String token;
 }
