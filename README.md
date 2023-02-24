@@ -15,6 +15,6 @@ Coming Soon
 # Some Other Stuff:
 Coming Soon
 
-#### &lt;copyright&gt; with 💛 by Sebastian Schindler, Paul Rakutt &lt;/copyright&gt;
+#### &lt;copyright&gt; with 💛 by Sebastian Schindler, Paul Rakutt - 2022-2023 &lt;/copyright&gt;
 
 
